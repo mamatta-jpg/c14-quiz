@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>C14 Ontario Auto — Quiz App</title>
+<style>
+  :root{
+    --blue:#0d2d6b;--blue2:#1a4294;--teal:#0e8a7a;--gold:#f0a500;
+    --red:#c0392b;--green:#1e8449;--bg:#f4f6fb;--card:#fff;
+    --text:#1a1a2e;--muted:#6b7280;--radius:12px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+  nav{background:var(--blue);color:#fff;padding:14px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  nav .logo{font-weight:700;font-size:1.1rem;letter-spacing:.5px}
+  nav .tagline{font-size:.8rem;opacity:.7}
+  nav .modes{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+  nav button{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);
+    color:#fff;padding:6px 14px;border-radius:20px;cursor:pointer;font-size:.85rem;transition:.2s}
+  nav button:hover,nav button.active{background:var(--gold);border-color:var(--gold);color:var(--blue)}
+  .screen{display:none;max-width:860px;margin:32px auto;padding:0 16px 60px}
+  .screen.active{display:block}
+  .card{background:var(--card);border-radius:var(--radius);box-shadow:0 2px 12px rgba(0,0,0,.08);padding:28px;margin-bottom:20px}
+  h1{font-size:1.6rem;color:var(--blue);margin-bottom:6px}
+  h2{font-size:1.15rem;color:var(--blue2);margin-bottom:14px}
+  p{line-height:1.6;color:#374151}
+  .muted{color:var(--muted);font-size:.875rem}
+  .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin:16px 0}
+  .stat{background:var(--bg);border-radius:8px;padding:14px;text-align:center}
+  .stat .val{font-size:1.7rem;font-weight:700;color:var(--blue)}
+  .stat .lbl{font-size:.75rem;color:var(--muted);margin-top:2px}
+  .prog-bar{background:#e5e7eb;border-radius:99px;height:8px;margin:8px 0 2px}
+  .prog-fill{height:8px;border-radius:99px;background:var(--teal);transition:width .4s}
+  .q-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px}
+  .q-badge{background:var(--blue);color:#fff;padding:3px 10px;border-radius:20px;font-size:.75rem}
+  .q-counter{color:var(--muted);font-size:.85rem}
+  .q-text{font-size:1.05rem;line-height:1.65;margin-bottom:20px;font-weight:500}
+  .options{display:flex;flex-direction:column;gap:10px}
+  .opt{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;border:2px solid #e5e7eb;
+    border-radius:10px;cursor:pointer;transition:.2s;background:var(--card)}
+  .opt:hover:not(.locked){border-color:var(--blue2);background:#eef2ff}
+  .opt.selected{border-color:var(--blue2);background:#eef2ff}
+  .opt.correct{border-color:var(--green)!important;background:#f0faf4!important}
+  .opt.wrong{border-color:var(--red)!important;background:#fdf2f2!important}
+  .opt.reveal-correct{border-color:var(--green)!important;background:#f0faf4!important}
+  .opt .letter{width:26px;height:26px;border-radius:50%;background:#e5e7eb;display:flex;
+    align-items:center;justify-content:center;font-weight:700;font-size:.8rem;flex-shrink:0;transition:.2s}
+  .opt.correct .letter{background:var(--green);color:#fff}
+  .opt.wrong .letter{background:var(--red);color:#fff}
+  .opt.reveal-correct .letter{background:var(--green);color:#fff}
+  .feedback{margin-top:18px;padding:14px 16px;border-radius:10px;display:none;line-height:1.55;font-size:.92rem}
+  .feedback.correct{background:#f0faf4;border-left:4px solid var(--green);color:#155724}
+  .feedback.wrong{background:#fdf2f2;border-left:4px solid var(--red);color:#721c24}
+  .feedback.info{background:#eef2ff;border-left:4px solid var(--blue2);color:#1a3a6e}
+  .btn{display:inline-flex;align-items:center;gap:6px;padding:11px 22px;border-radius:8px;
+    font-size:.95rem;font-weight:600;cursor:pointer;border:none;transition:.2s}
+  .btn-primary{background:var(--blue);color:#fff}
+  .btn-primary:hover{background:var(--blue2)}
+  .btn-teal{background:var(--teal);color:#fff}
+  .btn-teal:hover{opacity:.9}
+  .btn-gold{background:var(--gold);color:var(--blue)}
+  .btn-outline{background:transparent;border:2px solid var(--blue);color:var(--blue)}
+  .btn-outline:hover{background:var(--blue);color:#fff}
+  .btn-danger{background:transparent;border:2px solid var(--red);color:var(--red)}
+  .btn-danger:hover{background:var(--red);color:#fff}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+  .filter-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px}
+  .filter-btn{padding:6px 14px;border-radius:20px;border:2px solid #d1d5db;background:var(--card);
+    cursor:pointer;font-size:.82rem;transition:.2s}
+  .filter-btn:hover{border-color:var(--blue)}
+  .filter-btn.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+  .result-score{font-size:3.5rem;font-weight:800;color:var(--blue);text-align:center;margin:8px 0}
+  .result-grade{font-size:1.1rem;text-align:center;margin-bottom:20px}
+  .study-row{display:flex;align-items:center;gap:10px;margin:8px 0}
+  .study-row .study-name{width:200px;font-size:.85rem;flex-shrink:0}
+  .study-row .prog-bar{flex:1}
+  .study-row .pct{width:38px;text-align:right;font-size:.82rem;font-weight:600}
+  .home-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px}
+  @media(max-width:520px){.home-grid{grid-template-columns:1fr}}
+  .mode-card{border-radius:var(--radius);padding:24px;cursor:pointer;border:2px solid transparent;transition:.2s}
+  .mode-card:hover{border-color:var(--blue);transform:translateY(-2px)}
+  .mode-card.exam-card{background:linear-gradient(135deg,var(--blue),var(--blue2));color:#fff}
+  .mode-card.practice-card{background:linear-gradient(135deg,var(--teal),#0b6b5e);color:#fff}
+  .mode-card.history-card{background:linear-gradient(135deg,#7c3aed,#5b21b6);color:#fff}
+  .mode-card h3{font-size:1.1rem;margin-bottom:8px}
+  .mode-card p{font-size:.85rem;opacity:.85;line-height:1.5}
+  .mode-card .mode-icon{font-size:2rem;margin-bottom:10px}
+  .divider{height:1px;background:#e5e7eb;margin:20px 0}
+  .tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:.72rem;font-weight:600;
+    background:#dbeafe;color:var(--blue2);margin-bottom:8px}
+  .must-know{background:#fef3c7;color:#92400e}
+  .warn{background:#fff3cd;border-left:4px solid var(--gold);padding:12px 14px;border-radius:8px;
+    font-size:.875rem;margin-top:12px}
+  .hist-entry{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #e5e7eb}
+  .hist-entry:last-child{border-bottom:none}
+  .pass-badge{padding:3px 10px;border-radius:20px;font-size:.75rem;font-weight:600}
+</style>
+</head>
+<body>
+
+<nav>
+  <div>
+    <div class="logo">C14 Ontario Auto Insurance</div>
+    <div class="tagline">Interactive Practice App — Joseph Debono</div>
+  </div>
+  <div class="modes">
+    <button id="nav-home" class="active" onclick="show('home')">Home</button>
+    <button id="nav-exam" onclick="startExam()">Mock Exam</button>
+    <button id="nav-practice" onclick="show('practice')">Practice Bank</button>
+    <button id="nav-history" onclick="showHistory()">History</button>
+    <button id="nav-results" onclick="show('results')" style="display:none">Results</button>
+  </div>
+</nav>
+
+<!-- HOME -->
+<div id="screen-home" class="screen active">
+  <div class="card">
+    <h1>C14 Ontario Auto — Study &amp; Evaluation Tool</h1>
+    <p class="muted" style="margin-top:4px">Built from 120 IIC practice questions + 25-question blueprint-weighted mock exam</p>
+    <div class="stat-grid" style="margin-top:20px">
+      <div class="stat"><div class="val">100</div><div class="lbl">Exam MCQs</div></div>
+      <div class="stat"><div class="val">60%</div><div class="lbl">Pass Mark</div></div>
+      <div class="stat"><div class="val">25</div><div class="lbl">Mock Exam Qs</div></div>
+      <div class="stat"><div class="val">120</div><div class="lbl">Practice Qs</div></div>
+    </div>
+    <div class="divider"></div>
+    <p style="margin-bottom:6px"><strong>Exam:</strong> C14 Ontario Automobile Insurance — <strong>July 11, 2026</strong>. 100 MCQ, 3 hours, passing = 60%. Closed book.</p>
+    <div class="warn">⭐ Studies 2, 3, 5, and 9 together = <strong>43% of the exam</strong>. Locking in these four studies is the fastest path to 60%.</div>
+    <div class="home-grid">
+      <div class="mode-card exam-card" onclick="startExam()">
+        <div class="mode-icon">📝</div>
+        <h3>Mock Exam</h3>
+        <p>25 blueprint-weighted questions with instant feedback and full answer explanations. Scored out of 25.</p>
+      </div>
+      <div class="mode-card practice-card" onclick="show('practice')">
+        <div class="mode-icon">🎯</div>
+        <h3>Practice Bank</h3>
+        <p>120 IIC practice questions with instant correct/wrong feedback. Filter by study and drill weak areas.</p>
+      </div>
+      <div class="mode-card history-card" onclick="showHistory()" style="grid-column:1/-1">
+        <div class="mode-icon">📊</div>
+        <h3>Score History</h3>
+        <p>Track every mock exam attempt. See your average, best score, and per-study trends over time.</p>
+      </div>
+    </div>
+    <div class="divider"></div>
+    <h2>Exam Blueprint</h2>
+    <div id="blueprint-chart"></div>
+  </div>
+</div>
+
+<!-- EXAM -->
+<div id="screen-exam" class="screen">
+  <div class="card">
+    <div class="q-meta">
+      <span class="q-badge" id="exam-study-tag">Study 2 – TPL/DCPD</span>
+      <span class="q-counter" id="exam-counter">Question 1 of 25</span>
+    </div>
+    <div class="prog-bar"><div class="prog-fill" id="exam-prog" style="width:4%"></div></div>
+    <p class="muted" style="font-size:.75rem;margin-bottom:16px" id="exam-score-live">Score: 0 / 0 answered</p>
+    <div class="q-text" id="exam-q-text"></div>
+    <div class="options" id="exam-options"></div>
+    <div class="feedback" id="exam-feedback"></div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="exam-next-btn" onclick="examNext()" style="display:none">Next Question →</button>
+    </div>
+  </div>
+</div>
+
+<!-- PRACTICE -->
+<div id="screen-practice" class="screen">
+  <div class="card">
+    <h1>Practice Bank</h1>
+    <p class="muted">120 IIC MCQs with instant feedback — select an answer to see if you're right.</p>
+    <div style="margin-top:16px">
+      <div class="filter-row" id="practice-filters"></div>
+    </div>
+    <div class="q-meta" style="margin-top:4px">
+      <span class="q-badge" id="prac-study-tag"></span>
+      <span class="q-counter" id="prac-counter"></span>
+    </div>
+    <div class="prog-bar"><div class="prog-fill" id="prac-prog" style="width:0%"></div></div>
+    <div class="q-text" id="prac-q-text" style="margin-top:16px"></div>
+    <div class="options" id="prac-options"></div>
+    <div class="feedback" id="prac-feedback"></div>
+    <div class="btn-row">
+      <button class="btn btn-outline" onclick="pracPrev()" id="prac-prev-btn" style="display:none">← Prev</button>
+      <button class="btn btn-teal" id="prac-next-btn" onclick="pracNext()" style="display:none">Next →</button>
+    </div>
+  </div>
+</div>
+
+<!-- RESULTS -->
+<div id="screen-results" class="screen">
+  <div class="card">
+    <h1>Exam Results</h1>
+    <div class="result-score" id="res-score"></div>
+    <div class="result-grade" id="res-grade"></div>
+    <div class="divider"></div>
+    <h2>Score by Study</h2>
+    <div id="res-by-study"></div>
+    <div class="divider"></div>
+    <div id="res-advice"></div>
+    <div class="btn-row" style="margin-top:20px">
+      <button class="btn btn-primary" onclick="startExam()">Retake Exam</button>
+      <button class="btn btn-outline" onclick="show('practice')">Practice Bank</button>
+      <button class="btn btn-outline" onclick="showHistory()">View History →</button>
+    </div>
+  </div>
+  <div class="card" id="res-review">
+    <h2>Answer Review</h2>
+    <div id="res-review-list"></div>
+  </div>
+</div>
+
+<!-- HISTORY -->
+<div id="screen-history" class="screen">
+  <div class="card">
+    <h1>Score History</h1>
+    <div id="hist-summary-stats" class="stat-grid"></div>
+    <div class="divider"></div>
+    <div id="hist-list"></div>
+    <div class="divider"></div>
+    <h2>Per-Study Averages</h2>
+    <p class="muted" style="margin-bottom:12px">Averaged across all attempts — shows where you're consistently strong or weak.</p>
+    <div id="hist-study-avg"></div>
+    <div class="divider"></div>
+    <button class="btn btn-danger" onclick="clearHistory()">Clear All History</button>
+  </div>
+</div>
+
+<script>
+// ── DATA ──
+const PHASE5 = [{"text":"What is Ontario's mandatory minimum third-party liability limit under OAP 1?","options":["$100,000","$200,000","$300,000","$500,000"],"correct":1,"explanation":"The Insurance Act sets $200,000 as the floor. Most clients carry $1M–$2M, but $200K is the mandatory minimum. $100K was the old pre-1996 limit — a common distractor.","study":"Study 2 – TPL/DCPD"},{"text":"Lily has DCPD coverage with a $500 deductible. She is found 0% at fault in a collision. How much is her deductible?","options":["$0","$100","$250","$500"],"correct":0,"explanation":"DCPD deductible only applies when the insured bears some degree of fault. Zero fault = zero deductible. The trap options suggest proportional application — that is incorrect.","study":"Study 2 – TPL/DCPD"},{"text":"Which of the following is a non-economic loss?","options":["Future care costs arising from permanent disability","Lost wages during recovery","Pain and suffering due to injury","Rehabilitation expenses"],"correct":2,"explanation":"Non-economic losses are intangible — pain, suffering, loss of enjoyment. All other options are quantifiable dollar amounts (economic losses).","study":"Study 2 – TPL/DCPD"},{"text":"Where are Ontario's accident benefit entitlements defined?","options":["The Insurance Companies Act","The Statutory Accident Benefits Schedule (SABS)","The Highway Traffic Act","The Accident Insurance Act"],"correct":1,"explanation":"SABS is the provincial regulation governing AB. The Insurance Companies Act is federal and covers insurer licensing, not benefits.","study":"Study 3 – Accident Benefits"},{"text":"A person does not qualify for income replacement or non-earner benefits under SABS. Which benefit can they still receive?","options":["Income replacement benefit","Non-earner benefit","Medical and rehabilitation benefits","Death and funeral benefits"],"correct":2,"explanation":"Medical and rehabilitation benefits are the SABS baseline — they do not require proof of employment or dependent status. IRB requires documented income loss; non-earner requires specific criteria.","study":"Study 3 – Accident Benefits"},{"text":"What is the standard maximum income replacement benefit per week?","options":["$185","$400","$600","$1,000"],"correct":1,"explanation":"Standard IRB = 70% of gross pre-accident income to a maximum of $400/week. $185/week is the non-earner benefit — a common swap trap.","study":"Study 3 – Accident Benefits"},{"text":"A household member steals the insured's vehicle. Which coverage responds?","options":["Comprehensive","Specified Perils","Collision","All Perils"],"correct":3,"explanation":"Theft by a household member is excluded from Comprehensive and Specified Perils. Only All Perils covers it — the single most tested fact in Study 5.","study":"Study 5 – Loss or Damage"},{"text":"Which of the following losses is covered under Comprehensive but NOT under Specified Perils?","options":["Fire","Hail","Vandalism","Theft of the entire vehicle by a stranger"],"correct":2,"explanation":"Vandalism is covered under Comprehensive (and All Perils) but is not a named peril under Specified Perils. Fire, hail, and stranger theft are all Specified Perils.","study":"Study 5 – Loss or Damage"},{"text":"A client's car breaks down due to engine failure. Which coverage pays for the repair?","options":["All Perils","Collision","Comprehensive","None — mechanical breakdown is excluded"],"correct":3,"explanation":"Mechanical breakdown is universally excluded under all OAP 1 loss or damage coverages without exception.","study":"Study 5 – Loss or Damage"},{"text":"How many days does a newly acquired automobile have automatic coverage under an existing OAP 1 before the insured must notify the insurer?","options":["24 hours","7 days","14 days","30 days"],"correct":2,"explanation":"14 days is the automatic coverage window. Tested with 24-hour or 30-day distractors.","study":"Study 9 – General Provisions"},{"text":"A client wants to drive for a transportation network company (TNC) using their personal vehicle. What do they need?","options":["Nothing — their standard OAP 1 covers all vehicle use","A commercial auto policy only","A ridesharing endorsement in addition to their standard policy","A driver's policy replacing their owner's policy"],"correct":2,"explanation":"Standard OAP 1 excludes commercial TNC use. The client needs to add a ridesharing endorsement to their existing policy.","study":"Study 9 – General Provisions"},{"text":"Why should an insured NOT immediately remove a totalled vehicle from their policy?","options":["Cancellation fees will apply","The claim for the described vehicle will be invalidated","The temporary substitute automobile benefit will be lost","The insurer will void the policy for non-disclosure"],"correct":2,"explanation":"The temporary substitute automobile benefit exists only while the described vehicle is on the policy. Remove it too early and you lose rental/substitute coverage before the claim settles.","study":"Study 9 – General Provisions"},{"text":"Within how many days must an insured submit proof of loss after an automobile insurance claim?","options":["30 days","60 days","90 days","120 days"],"correct":2,"explanation":"Statutory Condition 6 requires proof of loss within 90 days. 30 and 60 days are common distractors.","study":"Study 8 – Statutory Conditions"},{"text":"An insured submits a fraudulent claim. What is the consequence under the Statutory Conditions?","options":["The fraudulent claim is denied but other coverages remain intact","The insured forfeits all rights under the policy","The insurer reduces the policy limits by 50%","The insurer is entitled to increase the premium at renewal"],"correct":1,"explanation":"SC 9 is absolute — fraud forfeits ALL rights under the policy, not just the fraudulent claim.","study":"Study 8 – Statutory Conditions"},{"text":"Which OPCF endorsement waives the depreciation deduction on a new vehicle total loss?","options":["OPCF 16","OPCF 20","OPCF 27","OPCF 43"],"correct":3,"explanation":"OPCF 43 = Removing the Depreciation Deduction — insurer pays replacement value, not depreciated ACV. Classic number-name test.","study":"Study 10 – Endorsements"},{"text":"A client with $1M TPL is struck by an at-fault driver who carries only $200,000 TPL. Damages are $800,000. Which endorsement covers the $600,000 gap?","options":["OPCF 20","OPCF 27","OPCF 43","OPCF 44R"],"correct":3,"explanation":"OPCF 44R (Family Protection) tops up coverage to the insured's own TPL limit when the at-fault driver is underinsured. $1M − $200K = $600K gap covered.","study":"Study 10 – Endorsements"},{"text":"A hit-and-run driver damages Maya's car and cannot be identified. What is this vehicle called?","options":["A phantom vehicle","An uninsured vehicle","An excluded vehicle","A non-owned vehicle"],"correct":0,"explanation":"Phantom vehicle = an unidentified vehicle in a hit-and-run. Uninsured = known driver with no coverage.","study":"Study 4 – Uninsured Auto"},{"text":"Which of the following would NOT be considered a material fact on an auto application?","options":["Three at-fault accidents in five years","The vehicle is used for commercial deliveries","The applicant's favourite colour is blue","A teenage driver in the household uses the vehicle weekly"],"correct":2,"explanation":"Material facts affect underwriting decisions. Driving record, commercial use, and household drivers all affect risk. Favourite colour is irrelevant.","study":"Study 6 – Applications"},{"text":"Which body handles unresolved auto insurance consumer complaints in Ontario?","options":["OLHI (OmbudService for Life and Health Insurance)","FSRA (Financial Services Regulatory Authority)","GIO (General Insurance OmbudService)","Financial Services Tribunal"],"correct":2,"explanation":"GIO handles property & casualty (auto/home) complaints. OLHI handles life and health — a classic swap trap.","study":"Study 11 – Consumer Protection"},{"text":"An Ontario-insured client is struck by an at-fault driver while driving in British Columbia. How is their property damage handled?","options":["DCPD applies — the client's own insurer pays directly","The client sues the at-fault driver in BC court","The client's collision coverage responds","The client's comprehensive coverage responds"],"correct":2,"explanation":"DCPD is Ontario-only. Out of province, property damage from another driver's fault reverts to the tort/collision system. The insurer subrogates against the at-fault driver.","study":"Study 12 – Across Canada"},{"text":"Carlos is found 0% at fault. His DCPD deductible is $500. His repair costs are $4,200. How much does he pay out of pocket?","options":["$500 — the full deductible applies","$250 — deductible split proportionally","$0 — 0% fault means no deductible","$4,200 — DCPD doesn't cover this"],"correct":2,"explanation":"DCPD deductible only triggers when the insured shares fault. Carlos is 0% at fault → $0 deductible. His insurer pays $4,200 and recovers from the at-fault driver's insurer.","study":"Scenario – Study 2"},{"text":"Maya's 17-year-old son takes her car without permission and crashes it. Which coverage responds?","options":["Comprehensive — theft by any person is covered","Specified Perils — theft is a named peril","Collision — the car struck a fence","All Perils — only coverage including household member theft"],"correct":3,"explanation":"Household member theft is excluded from Comprehensive and Specified Perils. All Perils is the only coverage that responds to both the theft and the collision.","study":"Scenario – Study 5"},{"text":"Daniel (at fault) crashes his car. Injured parties include his wife (named insured) and two co-workers. Who receives accident benefits?","options":["No one — Daniel caused the accident","Daniel, his wife, and both co-workers all receive AB","Only Daniel's wife — she is the only named insured","The co-worker who drove uninsured earlier that day is excluded"],"correct":1,"explanation":"AB are no-fault. Daniel gets AB even as the at-fault driver. His wife and co-workers in the vehicle are also eligible. Prior uninsured driving in a separate incident doesn't affect their status here.","study":"Scenario – Study 3"},{"text":"Rachel is in Quebec when an at-fault driver damages her car. She has DCPD, collision, comprehensive, and TPL on her Ontario policy. How is her property damage handled?","options":["DCPD responds — her insurer pays directly","Her collision coverage responds; insurer subrogates against the at-fault driver","Quebec's public auto system pays for property damage","Comprehensive covers it because DCPD doesn't apply"],"correct":1,"explanation":"DCPD is Ontario-only. Outside Ontario, at-fault-other-driver property damage = tort system. Rachel uses collision; her insurer subrogates. Quebec's public plan (SAAQ) covers bodily injury only.","study":"Scenario – Study 12"},{"text":"Jennifer has $2M TPL + OPCF 44R. She's struck by a driver with Ontario's mandatory minimum TPL. Her damages are $1.5M. How much does OPCF 44R pay?","options":["$0 — the at-fault driver has valid insurance","$1,300,000 — covers the gap between at-fault's limit and Jennifer's damages","$1,500,000 — Jennifer's insurer pays the full amount","$2,000,000 — Jennifer's full TPL limit triggers"],"correct":1,"explanation":"At-fault driver has $200K (Ontario minimum). Jennifer's damages = $1.5M. OPCF 44R covers the gap up to Jennifer's own TPL limit. Gap = $1.5M − $200K = $1.3M.","study":"Scenario – Study 10"}];
+
+const IIC = [
+{"study":"Study 1 – Introduction","text":"When are motor vehicle liability cards required?","options":["Only when driving rental cars","Only when driving commercial-use vehicles","When driving all cars","When driving all trucks, but not cars"],"correct":2,"explanation":"Liability cards (proof of insurance) are required when operating ALL motor vehicles in Ontario, regardless of type."},
+{"study":"Study 1 – Introduction","text":"What statement best describes contingent insurance?","options":["Begins paying when all other similar insurance on the same subject is exhausted","Applies if there is no other policy providing coverage","Is the first policy to respond to the loss","Drops down and covers when the total limit of the underlying policy has been used up paying claims"],"correct":1,"explanation":"Contingent insurance only applies when there is NO other policy in force covering the same risk — it's purely a backup."},
+{"study":"Study 1 – Introduction","text":"What is the purpose of motor vehicle liability cards?","options":["Shows proof of insurance","Proof of a valid driver's licence","Proof of membership in an automobile club","Provide a discount for gasoline purchases"],"correct":0,"explanation":"Liability cards serve as proof of insurance, confirming the vehicle is insured as required by provincial law."},
+{"study":"Study 1 – Introduction","text":"Dangerous driving is an example of what type of offence?","options":["Federal","Provincial","Municipal","Civil offence"],"correct":0,"explanation":"Dangerous driving is a Criminal Code offence — federal legislation. Traffic rules are provincial; bylaws are municipal."},
+{"study":"Study 1 – Introduction","text":"What is the purpose of the SPF 2 (standard driver's automobile policy)?","options":["Provides coverage for drivers who are driving vehicles they do not own","Provides coverage for garages for customers' vehicles","Provides coverage for businesses that could be held liable for damages caused by vehicles that they do not own","Provides coverage for vehicle owners if their car is damaged"],"correct":0,"explanation":"SPF 2 covers drivers who operate vehicles they don't own, providing personal liability protection."},
+{"study":"Study 1 – Introduction","text":"Who is the plaintiff in a civil matter?","options":["Person or organization that is being sued","Party who brings a legal action against another person or organization","Lawyer defending a person being charged with a crime","Lawyer prosecuting a person being charged with a crime"],"correct":1,"explanation":"The plaintiff initiates the lawsuit. The defendant is the party being sued. Plaintiff = party who files/sues."},
+{"study":"Study 1 – Introduction","text":"Who is the defendant in a civil matter?","options":["Person or organization that is being sued","Lawyer defending a person being charged with a crime","Lawyer prosecuting a person being charged with a crime","Person or organization that brings a legal action against another"],"correct":0,"explanation":"The defendant is the party being sued and must answer the plaintiff's claims in court."},
+{"study":"Study 1 – Introduction","text":"Which type of information is included on a motor vehicle liability card?","options":["Name and address of insurer","Age of principal driver","Insurance premium charged for the policy","Telephone number of the named insured"],"correct":0,"explanation":"Liability cards show the insurer's name/address, policy number, effective dates, and vehicle info — not personal details like age or premium."},
+{"study":"Study 1 – Introduction","text":"What is a municipal bylaw?","options":["Dangerous driving","Zoning","Rules of the road","Trade between provinces"],"correct":1,"explanation":"Municipal bylaws are local laws covering matters like zoning and parking. Traffic rules are provincial; dangerous driving is federal."},
+{"study":"Study 1 – Introduction","text":"Who stands to incur costs if a vehicle is damaged or destroyed in an accident?","options":["Owner of the vehicle","Garage making repairs to the vehicle","Tow truck driver who towed the vehicle to the garage","Bystander who saw the accident that damaged the vehicle"],"correct":0,"explanation":"The vehicle owner bears the financial risk of damage to their property — which is why loss or damage coverage exists."},
+{"study":"Study 2 – TPL/DCPD","text":"What is the verbal threshold?","options":["Words or language describing the nature and type of injury that must be suffered in order to be able to commence a legal action against the responsible party","Words or language describing the nature and type of injury that must be suffered in order to be able to claim under accident benefits coverage","Words or language describing the nature and type of injury that must be suffered in order to be able to claim under direct compensation–property damage (DCPD) coverage","Words or language describing the nature and type of injury that must be suffered in order to be able to commence an action under uninsured automobile coverage"],"correct":0,"explanation":"The verbal threshold defines the injury severity required to sue the at-fault driver for non-economic damages in Ontario's restricted tort system."},
+{"study":"Study 2 – TPL/DCPD","text":"What is a tort?","options":["Criminal charge against a person","Legal punishment for committing a civil wrong","Civil wrong or harm committed against another person","Fine a person must pay for committing crime"],"correct":2,"explanation":"A tort is a civil wrong that causes harm and creates civil liability. It is not a criminal matter — criminal wrongs are prosecuted by the state."},
+{"study":"Study 2 – TPL/DCPD","text":"What is an example of an economic loss?","options":["Pain and suffering due to an injury","Payment for becoming disabled due to an injury","Estimated cost of future care due to a disability arising from an injury","Rehabilitation costs for treatment of an injury"],"correct":2,"explanation":"Economic losses are quantifiable dollar amounts. Future care costs are a textbook example. Pain and suffering (A) is non-economic/intangible."},
+{"study":"Study 2 – TPL/DCPD","text":"What is Ontario's mandated minimum limit of third-party liability coverage?","options":["$100,000","$200,000","$300,000","$500,000"],"correct":1,"explanation":"Ontario's Insurance Act mandates a minimum of $200,000 TPL. Most clients carry $1M–$2M, but $200K is the statutory floor."},
+{"study":"Study 2 – TPL/DCPD","text":"Lily has direct compensation–property damage (DCPD) coverage with a $500 deductible. What amount of the deductible will she pay if she is 50 percent not at fault for a collision?","options":["$0","$100","$250","$500"],"correct":2,"explanation":"'50% not at fault' means 50% AT fault. The DCPD deductible applies proportionally: 50% × $500 = $250."},
+{"study":"Study 2 – TPL/DCPD","text":"Jian is involved in an incident for which he was held legally liable. He carries a liability limit on his motor vehicle policy of $1 million but he is sued for $2 million. Which statement is accurate according to the coverage provided under this section?","options":["Insurer will provide defence, negotiation, and settlement for $2 million.","Insurer will provide up to $2 million for the settlement, as well as defence and negotiation costs.","Insurer will not provide coverage because the lawsuit is more than the policy limit.","Insurer will only provide up to $1 million for the settlement, plus defence and negotiation costs for that amount."],"correct":3,"explanation":"The insurer defends up to the policy limit ($1M). Defence costs are included within that limit. Jian is personally responsible for any amount over $1M."},
+{"study":"Study 2 – TPL/DCPD","text":"Which statement correctly describes direct compensation systems?","options":["Injured parties have access to the civil justice system to recover damages.","Injured parties' access to the civil justice system to recover damages is strictly limited or banned.","Insureds always claim against third parties or third parties' insurers to recover damages.","Insureds can choose whether to recover damages from their own insurers or from third parties' insurers."],"correct":1,"explanation":"In direct compensation (no-fault) systems like Ontario, access to the tort system is restricted by the verbal threshold for non-economic damages."},
+{"study":"Study 2 – TPL/DCPD","text":"Under what circumstance would the third-party liability section of the policy have to respond due to the absolute liability provision?","options":["The insured is legally liable for bodily injury to a third party when operating the insured's automobile in an illegal street race.","The insured is legally liable for bodily injury to a third party when operating the insured's automobile as authorized under law.","The insured is legally liable for property damage to municipal property.","The insured is legally liable for property damage to their own garage door."],"correct":0,"explanation":"Absolute liability ensures innocent third parties are compensated even when the insured is engaged in illegal activity (street racing). Their own vehicle damage is excluded, but TPL responds to protect victims."},
+{"study":"Study 2 – TPL/DCPD","text":"Which statement correctly describes direct compensation–property damage (DCPD) coverage?","options":["Insureds deal with their own insurers for claims for damage to their own vehicles.","Insureds can claim against third parties or third parties' insurers for damages.","Insurers will indemnify their own insureds to the extent that they were at fault for the loss.","Insureds must obtain a court judgement to be paid by direct compensation–property damage coverage."],"correct":0,"explanation":"DCPD means you deal with YOUR OWN insurer for vehicle damage when the other driver is at fault — no need to chase the other driver's insurer."},
+{"study":"Study 2 – TPL/DCPD","text":"Ming borrows her friend's bike to go mountain biking. She secures the bike to her car on a rooftop bike rack but does not lock it properly. As she is driving, the bike falls off the car and is damaged. Ming's friend wants Ming to pay for the loss under her automobile liability coverage. Which statement describes how the liability coverage will respond?","options":["Ming's liability coverage will pay for the damaged bike, but Ming will have to pay the standard $300 property damage deductible.","Ming's liability coverage will pay for the damaged bike and Ming will not have to pay a deductible.","Ming's liability coverage will not pay for the loss because it excludes damage to property in the care, custody, or control of the named insured.","Ming's liability coverage will not pay for the loss because it was Ming's fault the property is damaged because she did not lock it properly."],"correct":2,"explanation":"Auto liability excludes damage to property in the care, custody, or control of the insured. Since Ming was transporting the bike, it was under her care/custody/control."},
+{"study":"Study 3 – Accident Benefits","text":"Who is considered the named insured under an automobile insurance policy?","options":["The person or party designated in the policy as the insured","A pedestrian hit by the insured automobile","The automobile insurance company","Someone covered by the policy but is not specifically named"],"correct":0,"explanation":"The named insured is the specific person or entity named in the policy declarations — not just anyone who may have coverage under the policy."},
+{"study":"Study 3 – Accident Benefits","text":"What is an example of a service provider's billing practice that might indicate fraudulent activity?","options":["Services are billed only once.","The listed therapist is no longer employed by the firm.","Patterns for services are within accepted provincial standards.","Treatments are delivered by licensed therapists."],"correct":1,"explanation":"Billing for services from a therapist who no longer works there suggests fraudulent billing — charging for work that person couldn't have performed."},
+{"study":"Study 3 – Accident Benefits","text":"In Ontario, where are accident benefits explained?","options":["Accident Insurance Act","Statutory Accident Benefits Schedule (SABS)","Highway Traffic Act","Insurance Companies Act"],"correct":1,"explanation":"SABS (Statutory Accident Benefits Schedule) is the Ontario regulation under the Insurance Act that defines all accident benefit entitlements and amounts."},
+{"study":"Study 3 – Accident Benefits","text":"How is a dependant defined in relation to accident benefits insurance?","options":["Person who financially supports their entire family","Person who is not able to exist or sustain themselves without the power or aid of someone else","Person's pet","Person or party designated in the policy as the insured"],"correct":1,"explanation":"A dependant relies on the insured for support — financially or functionally unable to sustain themselves independently."},
+{"study":"Study 3 – Accident Benefits","text":"Which statement is true?","options":["Insurers are required to pay income replacement or non-earner benefits, educational expenses, expenses of visitors, and housekeeping and home maintenance expenses to a person who, as the driver, was driving the automobile without a valid driver's licence.","Insurers are required to pay income replacement or non-earner benefits, educational expenses, expenses of visitors, and housekeeping and home maintenance expenses to any person who has made, or who knows of, a material misrepresentation which induced the insurer to enter into the contract of insurance or who intentionally failed to notify the insurer of a change in the risk material to the contract.","Excluded persons are eligible for benefits other than income replacement or non-earner benefits, educational expenses, expenses of visitors, and housekeeping and home maintenance expenses.","Insurers are required to pay income replacement or non-earner benefits, educational expenses, expenses of visitors, and housekeeping and home maintenance expenses to a person who is injured in a car accident, and as the driver, is an excluded driver under the policy."],"correct":2,"explanation":"Excluded persons can still receive medical, rehabilitation, and attendant care benefits — but NOT income replacement, non-earner, educational, visitor, or housekeeping/home maintenance benefits."},
+{"study":"Study 3 – Accident Benefits","text":"What accident benefit options do Ontario residents have when they are injured in automobile accidents outside Ontario (anywhere in Canada or the United States)?","options":["Ontario residents can choose between the Ontario level benefits and the no-fault benefits available in the jurisdiction where the accident occurred.","Ontario residents do not have any choice. They must claim the Ontario level benefits.","Ontario residents injured in automobile accidents outside Ontario are not entitled to any accident benefit coverage at all.","Ontario residents are only eligible for the level of no-fault benefits available in the jurisdiction where the accident occurred, even if it is less than the Ontario level."],"correct":0,"explanation":"Ontario residents injured in accidents in Canada or the US can choose whichever level of benefits is more generous — their Ontario SABS entitlements or the local jurisdiction's benefits."},
+{"study":"Study 3 – Accident Benefits","text":"What is a potential indicator of a staged accident?","options":["The accident occurred in a busy intersection.","The driver is the only passenger in the car at the time of the collision.","Vehicle damage from the collision is minimal, yet all passengers claim soft tissue injuries.","Vehicle damage from the collision is severe and but the only passenger reported no injuries."],"correct":2,"explanation":"Minimal vehicle damage with multiple soft-tissue injury claims is a classic fraud indicator — the claimed injuries are disproportionate to the collision force."},
+{"study":"Study 3 – Accident Benefits","text":"In what circumstances are insurers required to pay income replacement or non-earner benefits, educational expenses, expenses of visitors, and housekeeping and home maintenance expenses?","options":["Person is injured in a car accident, and as the driver, is an excluded driver under the policy","Person is injured in a car accident, and as the driver, knew or ought to have known that they were operating the automobile at the time of the accident without the owner's consent","Person who is the driver of a car has an accident but refuses to provide a breath sample and is convicted of failure to provide the sample","Pedestrian who does not have their own insurance policy is hit by a car while crossing the street"],"correct":3,"explanation":"A pedestrian without their own insurance gets full accident benefits from the at-fault driver's insurer. The other three options describe excluded persons who are NOT eligible for those benefits."},
+{"study":"Study 3 – Accident Benefits","text":"What amount may an insurer deduct when calculating the amount of weekly income replacement or non-earner benefits payable to an insured person?","options":["Money insureds receive back from the government by claiming medical expenses on their income tax returns","Money insureds receive as gifts from relatives to help with medical expenses following an automobile accident","Net payments for loss of income that have been received by the insured person as a result of the accident under the laws of any jurisdiction or under any income continuation plan","Funds for prescription drugs that insureds have claimed from their employer-sponsored benefit plan"],"correct":2,"explanation":"Insurers deduct collateral income benefits to prevent double recovery — other payments for lost income (e.g., disability benefits, sick pay) are deducted from the IRB calculation."},
+{"study":"Study 3 – Accident Benefits","text":"In Ontario, what must be provided as part of an accident benefit?","options":["Direct compensation–property damage coverage","Third-party liability coverage","Medical, rehabilitation, and attendant care benefits","Uninsured automobile coverage"],"correct":2,"explanation":"Medical, rehabilitation, and attendant care benefits are mandatory accident benefits under SABS. TPL, DCPD, and uninsured auto are separate mandatory coverages."},
+{"study":"Study 4 – Uninsured Auto","text":"When might a motor vehicle accident claims fund cover a property damage loss?","options":["The owner or driver of the car responsible for causing the loss is identified.","The owner or driver of the car responsible for causing the loss is unidentified.","Property damage is never covered by any motor vehicle accident claims fund.","Property damage is always covered by any motor vehicle accident claims fund."],"correct":1,"explanation":"The MVACF covers property damage when the at-fault driver is unidentified (hit-and-run). If identified, the driver or their insurer is responsible."},
+{"study":"Study 4 – Uninsured Auto","text":"What statement correctly describes stacking of family protection endorsement limits?","options":["Stacking of limits is not permitted.","An insured can stack limits for up to two policies that have the family protection endorsement.","An insured can stack limits for up to three policies' family protection endorsements.","Stacking of limits is permitted for amounts up to the total damages suffered by the insured."],"correct":3,"explanation":"Ontario permits stacking of OPCF 44R limits across multiple household policies, but the total cannot exceed the insured's actual damages."},
+{"study":"Study 4 – Uninsured Auto","text":"What is another name for a motor vehicle accident claims fund?","options":["Unsatisfied judgment fund","Unqualified judgment fund","Automobile insurance fund","Automobile fund"],"correct":0,"explanation":"The MVACF is also called the Unsatisfied Judgment Fund — it pays when a judgment against an uninsured/hit-and-run driver cannot be collected."},
+{"study":"Study 4 – Uninsured Auto","text":"In Ontario, what is the maximum payable amount for property damage to automobile and contents with uninsured automobile coverage?","options":["$15,000","$25,000","$50,000","$100,000"],"correct":1,"explanation":"Section 5 (Uninsured Automobile) of OAP 1 provides up to $25,000 for property damage, subject to a $300 deductible."},
+{"study":"Study 4 – Uninsured Auto","text":"What is the deductible applied to property damage and contents in Section 5—Uninsured Automobile Coverage of the OAP 1?","options":["$300","$500","$750","$1,000"],"correct":0,"explanation":"The standard property damage deductible under uninsured automobile coverage (Section 5) is $300."},
+{"study":"Study 4 – Uninsured Auto","text":"What priority payment percentage is attributed to bodily injury payments under uninsured automobile coverage?","options":["5%","10%","90%","95%"],"correct":3,"explanation":"95% of available funds under uninsured auto coverage are allocated to bodily injury, leaving only 5% for property damage — reflecting the priority of personal injury."},
+{"study":"Study 4 – Uninsured Auto","text":"What compensates an insured awarded a court judgment against a driver who is identified but does not have enough insurance to cover the loss?","options":["Accident benefits","Third-party liability","Uninsured motorist","Family protection"],"correct":3,"explanation":"Family Protection (OPCF 44R) tops up when the at-fault driver is underinsured relative to the victim's own TPL limit. Uninsured auto covers NO insurance; OPCF 44R covers NOT ENOUGH insurance."},
+{"study":"Study 4 – Uninsured Auto","text":"How can a victim receive payment under a motor vehicle accident claims fund (MVACF) if an uninsured owner and/or driver denies liability?","options":["May require the victim to submit a statutory declaration about the details of the accident","May require the victim to pay a $1,000 deductible before reimbursing any property damage loss","May require that the victim to sue and a judgment is rendered before making payment","May require the victim to complete a statement of loss and provide evidence to support it"],"correct":2,"explanation":"When an uninsured driver denies liability, the MVACF requires the victim to pursue a court judgment against that driver before the Fund will pay the unsatisfied amount."},
+{"study":"Study 4 – Uninsured Auto","text":"Which Ontario Superior Court of Justice decision set the precedent that a victim does not have to be struck directly by a vehicle to be eligible for damages?","options":["Talbot v. GAN General Insurance Co","Lewis v. Economical Insurance Group","Seeman v. Dominion Insurance","Schmidt v. Halwell Mutual Insurance"],"correct":0,"explanation":"Talbot v. GAN established that physical contact with the vehicle is not required — proximity to a vehicle-caused incident is sufficient grounds for a claim."},
+{"study":"Study 4 – Uninsured Auto","text":"What amount of coverage does the family protection endorsement provide in Ontario?","options":["Provides primary coverage for losses caused by uninsured drivers up to $200,000","Tops up the limit of uninsured automobile coverage from the provincial minimum limit of $200,000 to the endorsement limit","Doubles the limit of uninsured automobile coverage from the provincial minimum limit of $100,000 to $200,000","Provides primary coverage for losses caused by uninsured drivers up to $1 million"],"correct":1,"explanation":"OPCF 44R is excess coverage — it bridges the gap between the at-fault driver's limit and the insured's own TPL limit, starting from Ontario's $200K mandatory minimum."},
+{"study":"Study 5 – Loss or Damage","text":"Where does motor vehicle arson tend to occur?","options":["Isolated locations","Busy locations","Locations with a lot of witnesses","Locations with video surveillance"],"correct":0,"explanation":"Vehicle arson typically occurs in isolated, remote locations to avoid detection — this pattern is itself a fraud indicator for investigators."},
+{"study":"Study 5 – Loss or Damage","text":"What type of damage is excluded under the owner's policy?","options":["Mechanical breakdown of the vehicle","Damage caused by impact with an object","Vandalism damage to the vehicle","Earthquake damage to the vehicle"],"correct":0,"explanation":"Mechanical breakdown is universally excluded under ALL OAP 1 loss or damage coverages. Collision (impact), vandalism, and earthquake are covered perils."},
+{"study":"Study 5 – Loss or Damage","text":"What type of theft is covered under all perils but not comprehensive coverage?","options":["Theft by conversion","Theft by insurance fraud","Theft by a household member","Theft by a voluntary parting of title"],"correct":2,"explanation":"Household member theft is specifically excluded from Comprehensive and Specified Perils but IS covered under All Perils — the most-tested fact in Study 5."},
+{"study":"Study 5 – Loss or Damage","text":"What is a phantom vehicle?","options":["Vehicle that does not exist or is already wrecked","Vehicle that has been purchased but not yet delivered to the buyer","Vehicle that is insured but has a suspension of coverage endorsement (OPCF 16 or SPF 16) attached to the policy","Vehicle that is owned by a garage"],"correct":0,"explanation":"In the fraud context of Study 5, a phantom vehicle is one that doesn't actually exist (or is already wrecked) but is insured to fraudulently collect claims or premiums."},
+{"study":"Study 5 – Loss or Damage","text":"What losses are covered under specified perils coverage?","options":["Theft by a person who has legal possession of the car under a written agreement","Theft due to a voluntary fraudulent change in ownership","Damage caused by impact with an animal","Damage caused by earthquake"],"correct":3,"explanation":"Earthquake is a named specified peril. Animal impact is Comprehensive only. Theft by a person with legal possession (conversion) and voluntary title fraud are excluded from all perils."},
+{"study":"Study 5 – Loss or Damage","text":"Lightning strikes Aliyah's car, blowing out all the windows and causing $1,800 damage. Aliyah has specified perils coverage with a $300 deductible. What would her insurer pay?","options":["$0","$300","$1,500","$1,800"],"correct":2,"explanation":"Lightning is a specified peril. Payment = $1,800 loss − $300 deductible = $1,500."},
+{"study":"Study 5 – Loss or Damage","text":"What is salvage?","options":["Remaining value of property after severe damage by fire or other peril","Remaining value of property after the deductible is paid by an insured","Amount paid to repair the damaged automobile","Amount of premium charged for the insurance"],"correct":0,"explanation":"Salvage is the residual value of damaged property after a loss. When a vehicle is totalled, the insurer retains the salvage (wreck) as part of the indemnity process."},
+{"study":"Study 5 – Loss or Damage","text":"How many days do insureds (who are not incapacitated) have to notify the insurer in writing of a loss involving the car?","options":["1","2","7","14"],"correct":1,"explanation":"Under OAP 1 Statutory Conditions, the insured must give prompt written notice — typically within 2 days of discovering the loss (absent incapacitation)."},
+{"study":"Study 5 – Loss or Damage","text":"Which statement correctly describes the outcome if the insured operates the vehicle under the influence of intoxicating liquor or drugs?","options":["The policy will not cover loss or damage to the vehicle.","The policy will only cover the damage to the vehicle if vehicle is owned by a family member.","The policy will only cover the vehicle if this is the driver's first offence.","The policy will only cover the percentage of the damage for which the driver is at fault."],"correct":0,"explanation":"Operating while impaired is a prohibited use under Statutory Condition 5 — loss or damage coverage on the insured's own vehicle is voided. TPL (absolute liability) may still respond for third-party claims."},
+{"study":"Study 5 – Loss or Damage","text":"What is an example of salvage charges that would be covered as an additional benefit under loss or damage coverage?","options":["Expenses involved in recovering property to prevent loss from an insured peril","Expenses that arise when the automobile is being transported by water and cargo must be jettisoned","Expenses that arise from fire department charges for attending the scene of a loss","Expenses for customs duties levied when the automobile suffers a loss in the United States"],"correct":0,"explanation":"Sue and labour (salvage) charges cover expenses incurred to protect property from further damage from an insured peril — paid as an additional benefit on top of the claim itself."},
+{"study":"Study 6 – Applications","text":"What does an underwriter consider as a misrepresentation on an automobile application?","options":["Underestimating the size of the engine and mileage on one's car","Intentionally not reporting details of a claim","Forgetting to disclose a ticket recently received","Guessing the year and make of the car"],"correct":1,"explanation":"Misrepresentation requires INTENT — deliberately omitting claim details is intentional non-disclosure. Forgetting or estimating (A, C, D) are honest mistakes, not misrepresentation."},
+{"study":"Study 6 – Applications","text":"What is the difference between an electric vehicle and a hybrid vehicle?","options":["No difference","Electric vehicle uses a combination of internal combustion engine and electric motor features","Hybrid vehicle uses a combination of internal combustion engine and electric motor features","Electric vehicle has a range of 50 km per battery charge, but the hybrid vehicle has a range of 200 km per battery charge"],"correct":2,"explanation":"A hybrid combines an internal combustion engine (ICE) with an electric motor. A pure electric vehicle runs on electricity alone — no combustion engine."},
+{"study":"Study 6 – Applications","text":"Which section of the application contains a warning of a penalty when the applicant gives false particulars of a described automobile to be insured, and these particulars are to the prejudice of the insurer?","options":["Driver information","Rating information","Insurance coverages applied for","Declaration of applicant"],"correct":3,"explanation":"The Declaration section contains the applicant's signature and the statutory warning that providing false particulars to the prejudice of the insurer is an offence."},
+{"study":"Study 6 – Applications","text":"What is a function of underwriting?","options":["Establishing the terms of the application","Determining the purchase price of the automobile","Using actuarial methodology to determine rates for insuring an automobile","Determining the amount to be paid for a claim"],"correct":0,"explanation":"Underwriting establishes the terms under which a risk will be accepted — setting conditions, exclusions, and premiums. Rate development (C) is actuarial/ratemaking, not underwriting."},
+{"study":"Study 6 – Applications","text":"What coverage listed in Section 8 of the OAF 1 is not a mandatory coverage?","options":["Accident benefits","Loss or damage","Liability","Uninsured automobile"],"correct":1,"explanation":"Physical damage (loss or damage) is optional in Ontario. Liability, accident benefits, and uninsured automobile are all mandatory coverages."},
+{"study":"Study 6 – Applications","text":"What is an insurer required to do when a policy is issued that differs in any way from the written application?","options":["Notify the insured, in writing, in what ways the policy differs from the application","Give the insured a 25 percent premium discount","File a report with the Insurance Bureau of Canada","Allow the insured to object to the changes by advising the insurer in writing within 14 days or the policy is deemed to cover as it is written"],"correct":0,"explanation":"When a policy differs from the application, the insurer must notify the insured in writing of those differences, giving the insured the opportunity to review and accept or reject."},
+{"study":"Study 6 – Applications","text":"How does an insurer benefit by using a written application signed by the applicant?","options":["The application confirms the broker and agent acted in utmost good faith.","The applicant is not required to disclose all information because of the privacy act.","If the application was made orally, the signed applicant must be received within seven days.","If there exists within the application a misrepresentation, the signed application may be used to establish misrepresentation."],"correct":3,"explanation":"A signed application creates a written record — if the insured later denies providing certain information, the signed document can be used as evidence of misrepresentation."},
+{"study":"Study 6 – Applications","text":"What is underwriting?","options":["Consideration of the acceptance or rejection of a risk","Solely the pricing mechanism of insurance","Terms of the policy if the risk is declined","Settlement of claims under the policy"],"correct":0,"explanation":"Underwriting is the process of evaluating applications and deciding whether to accept a risk and on what terms. It is not solely pricing, nor is it claims settlement."},
+{"study":"Study 6 – Applications","text":"What type of coverages apply under the owner's policy (OAP 1) in Ontario when another motorist is responsible for personal injuries to the insured, injuries to a pedestrian, and damage to the insured's automobile?","options":["Liability, uninsured automobile coverage, and comprehensive","Liability, direct compensation, and uninsured automobile coverage","Liability, direct compensation, and collision","Liability, direct compensation, and accident benefits"],"correct":3,"explanation":"Accident Benefits covers the insured's injuries (no-fault). DCPD covers the insured's vehicle damage (other driver at fault). Liability protects the insured for any exposure to the pedestrian."},
+{"study":"Study 6 – Applications","text":"What is accomplished using an endorsement?","options":["Terminating a policy mid-term","Lapsing a policy on renewal","Limiting insurers' exposures under the policy for certain risks","Changing statutory conditions under the policy"],"correct":2,"explanation":"Endorsements modify standard policy terms — adding, restricting, or changing coverage. Statutory conditions (D) cannot be altered by endorsement as they are mandated by law."},
+{"study":"Study 7 – Ratemaking","text":"What is driving experience?","options":["Number of years licensed","Number of cars owned in a lifetime","Vehicle usage","Territory and distance driven annually"],"correct":0,"explanation":"Driving experience refers to the number of years a person has been licensed — more experience generally correlates with lower risk and lower premiums."},
+{"study":"Study 7 – Ratemaking","text":"What statement correctly describes file and use following an adjudication period?","options":["The board cannot challenge the rates.","The board can challenge the rates within a period of time, usually 90 to 120 days.","Following the period of time, the insurer can use the rates as they are deemed to be approved.","The insurers always try to file rate increases with the rate board."],"correct":1,"explanation":"Under file and use, the insurer files and immediately uses the rates, but the regulator has 90–120 days to review and challenge them during the adjudication period."},
+{"study":"Study 7 – Ratemaking","text":"What factor affects the premium of an automobile insurance policy?","options":["Type and model of automobile","Existence of a lien on the automobile","Insured's friend who occasionally borrows the vehicle","Number of persons in the household"],"correct":0,"explanation":"Vehicle make and model directly affects premiums through CLEAR ratings. Liens, occasional external borrowers, and household size alone don't affect the underwriting risk."},
+{"study":"Study 7 – Ratemaking","text":"CLEAR (Canadian Loss Experience Automobile Rating) is based on what factor?","options":["Likelihood of the vehicle being involved in a claim and how much repair would cost","Purchase price of the vehicle and the amount it would cost to replace or repair it","Manufacturer's suggested retail price of the vehicle if in an accident","Territory the vehicle is in and how attractive the vehicle is to thieves"],"correct":0,"explanation":"CLEAR uses historical claims data for each vehicle model — both claim frequency (likelihood) and severity (repair cost) — to set vehicle-specific rating factors."},
+{"study":"Study 7 – Ratemaking","text":"What is the difference between usage-based insurance rating and traditional rating?","options":["In usage-based insurance, driving behaviours and mileage are tracked so that the mileage can become a variable factor and used in combination with other factors to calculate the premium.","Traditional rating makes premium prices more individualized because it uses actuarial studies of aggregated historical data (law of large numbers) to produce rating factors.","Usage-based insurance rating results in higher premiums because there are less discounts available for drivers.","Traditional rating results in lower premiums."],"correct":0,"explanation":"UBI/telematics uses real driving data (behaviour, mileage, time of day) to personalize premiums. Traditional rating uses aggregate historical data for categories, not individual behaviour."},
+{"study":"Study 7 – Ratemaking","text":"According to the law of large numbers, the degree of uncertainty is reduced as what increases?","options":["Frequency of the events","Cost of the type of risk","Size of the type of risk","Location where the events occur"],"correct":2,"explanation":"The law of large numbers: as the number of similar risks (sample size) increases, actual results converge toward the expected value, reducing uncertainty for the insurer."},
+{"study":"Study 7 – Ratemaking","text":"What term describes the forecasting of the increase or decrease of loss costs for the period for which premiums are calculated?","options":["Actuary forecasting","Projected loss forecasting","Rating forecasting","Trending"],"correct":3,"explanation":"Trending projects historical loss data forward to account for anticipated changes in costs and frequencies, so rates reflect expected future losses rather than past figures."},
+{"study":"Study 7 – Ratemaking","text":"What province has NOT established a rate board to control automobile insurance rates?","options":["New Brunswick","Newfoundland","Nova Scotia","Saskatchewan"],"correct":3,"explanation":"Saskatchewan has SGI (Saskatchewan Government Insurance), a Crown corporation providing basic auto insurance — there is no private-market rate board as the government sets rates directly."},
+{"study":"Study 7 – Ratemaking","text":"How many levels of automation have been identified by the Society of Automotive Engineers (SAE) International?","options":["Four","Five","Six","Seven"],"correct":2,"explanation":"SAE International defines 6 levels of automation: Level 0 (no automation) through Level 5 (full automation), for a total of 6 levels (0–5)."},
+{"study":"Study 7 – Ratemaking","text":"Some automobiles are more attractive to thieves than others, but the incidence of theft is also influenced by what factor?","options":["Principal driver","Territory in which the automobile is normally operated","Registered owner of the automobile","Number of occasional drivers"],"correct":1,"explanation":"Territory (where the vehicle is parked/operated) significantly affects theft risk — urban areas and certain neighbourhoods have higher theft rates regardless of vehicle attractiveness."},
+{"study":"Study 8 – Statutory Conditions","text":"What conditions apply to garage automobile policies in Ontario?","options":["Prescribed conditions","Garage conditions","Civil conditions","Statutory conditions"],"correct":3,"explanation":"In Ontario, all automobile insurance policies — including garage policies — are subject to statutory conditions as mandated by the Insurance Act."},
+{"study":"Study 8 – Statutory Conditions","text":"Which statement correctly describes the termination of an owner's policy according to the statutory conditions?","options":["Only the insurer may terminate the policy mid-term.","The policy may be terminated by either the insured or the insurer, provided certain conditions are met.","Once the policy has been issued, it can be terminated only if the insured gets rid of the automobile or gives up their driver's licence.","Only the insured may terminate the policy after it has been issued."],"correct":1,"explanation":"Both the insured and the insurer can terminate mid-term. The insured can cancel any time; the insurer must provide statutory notice periods (e.g., 15 days for non-payment in Ontario)."},
+{"study":"Study 8 – Statutory Conditions","text":"Which type of vehicle use is prohibited under the statutory conditions?","options":["Parent using the car to drive members of her daughter's sports team to a game","Driver using the automobile for street racing","Insured's sister speeding 10 km/h over the speed limit on the highway","Driver using the car while she is qualified and authorized to drive"],"correct":1,"explanation":"Street racing is explicitly prohibited under Statutory Condition 5 and voids loss or damage coverage. Carpooling, minor speeding, and authorized driving are not prohibited uses."},
+{"study":"Study 8 – Statutory Conditions","text":"Anton is driving his car in an illegal street race when he loses control and collides with a pole, which causes $5,000 of damage to his car. How will Anton's policy respond to the loss?","options":["Pay the loss in full","Pay the loss but deduct a $1,000 penalty charge for the racing conviction","Pay the loss but subrogate against Anton","Not pay the loss because racing is a prohibited use under the statutory conditions"],"correct":3,"explanation":"Street racing is a prohibited use under SC 5 — Anton's own vehicle damage is NOT covered. Note: absolute liability means TPL might still respond for any innocent third parties injured."},
+{"study":"Study 8 – Statutory Conditions","text":"Miguel is driving home from work. While he is stopped at an intersection for a red light, the driver behind him fails to stop in time and collides with his rear bumper. Miguel's car is drivable, but it has damage that will need to be repaired. What should Miguel do?","options":["Give prompt written notice to the insurer of the accident and/or resulting claim","Attempt to settle the loss directly with the other driver without involving his insurer","Assume liability for the collision","Accept the other driver's apology for causing the loss and his offer to pay to repair Miguel's damage himself"],"correct":0,"explanation":"Statutory Condition 4 requires prompt notice to the insurer. Settling without insurer involvement could breach policy conditions and waive rights."},
+{"study":"Study 8 – Statutory Conditions","text":"After an insured automobile has been damaged in an accident, whose responsibility is it to protect the automobile from further damage?","options":["Adjuster","Insured","Insurer","Person who caused the damage"],"correct":1,"explanation":"The insured must take reasonable steps to protect the property from further damage after a loss — this is a duty under the statutory conditions."},
+{"study":"Study 8 – Statutory Conditions","text":"What does an insurer consider to be a material change in risk?","options":["Insured installs a bicycle rack on the car","Insured borrows a friend's car","Insured pays off their car loan","Insured begins using their car to drive for Uber"],"correct":3,"explanation":"Driving for Uber is commercial TNC use — a material change in risk that must be reported. Accessories, borrowing cars, and paying off a loan don't materially change the risk profile."},
+{"study":"Study 8 – Statutory Conditions","text":"The statutory conditions require an insurer to pay insurance money for which it is liable within what time period?","options":["Within 60 days after the date of accident","Within 60 days after the date the accident was reported by the insured","Within 60 days after it receives the proof of loss submitted by the insured","Within 60 days after the date of the accident or within 60 days after the repairs are started if the insurer chooses to repair the damaged automobile"],"correct":2,"explanation":"The 60-day payment clock starts when the insurer receives the proof of loss — not the accident date or reporting date."},
+{"study":"Study 8 – Statutory Conditions","text":"What are statutory conditions called in Nova Scotia?","options":["Prescribed conditions","Mandatory conditions","General conditions","Civil conditions"],"correct":0,"explanation":"Nova Scotia uses 'prescribed conditions' while Ontario uses 'statutory conditions' — different terminology for the same mandatory policy conditions concept."},
+{"study":"Study 8 – Statutory Conditions","text":"What happens if the insured has overpaid their insurance premium based on being incorrectly classified under the insurer's risk classification system?","options":["Insurer must refund the premium in full","Insurer must refund the overpayment with interest","Insurer can keep the overpayment","Insurer must renew the policy with a premium discount"],"correct":0,"explanation":"If the insurer has incorrectly classified the insured resulting in an overpayment, the insurer must refund the overpaid premium in full."},
+{"study":"Study 9 – General Provisions","text":"Amal is considering ways to supplement her income using her car. Which of the following statements correctly describes a use of her car that would be covered?","options":["She can drive for a taxi company using her own car but must notify her insurer.","She can make deliveries using her own car and will be covered under her regular owner's policy.","She can drive for a transportation network company but must have permission from her insurer.","She can make deliveries using her own car and will be covered under the courier company's garage policy."],"correct":2,"explanation":"TNC (ridesharing) driving requires a ridesharing endorsement approved by the insurer. Taxi driving and delivery work also require specific commercial coverage beyond the standard OAP 1."},
+{"study":"Study 9 – General Provisions","text":"What is carsharing?","options":["Arrangement set up by means of a website or mobile app in which a passenger travels in a private vehicle driven by its owner, for free or for a fee","Arrangement where a driver leases a car on a short-term basis from a car rental company","Arrangement set up by means of a website or mobile app that links renters and car owners to arrange peer-to-peer car rental","Arrangement where an insured uses a temporary substitute automobile while the described automobile is in the shop for repair"],"correct":2,"explanation":"Carsharing is peer-to-peer car rental via an app — owners rent their vehicles to others. Ridesharing (A) is passenger transportation; (D) is a temporary substitute vehicle."},
+{"study":"Study 9 – General Provisions","text":"What is an eligibility criterion for drivers to get coverage under a ridesharing endorsement?","options":["Have a standard owner's policy with the addition of a permission to carry paying passengers endorsement","Be contracted with a transportation network company","File proof of financial responsibility with the superintendent of insurance (or comparable provincial insurance regulator) for $2 million","Have an umbrella liability policy with a limit of $2 million"],"correct":1,"explanation":"To obtain a ridesharing endorsement, the driver must be contracted with a registered TNC (like Uber or Lyft) — this is the primary eligibility requirement."},
+{"study":"Study 9 – General Provisions","text":"Within what period of time should the insured notify the insurer of the possession of a newly acquired automobile?","options":["14 hours","14 days","24 days","24 hours"],"correct":1,"explanation":"OAP 1 provides 14 days of automatic coverage for a newly acquired vehicle. The insured must notify the insurer within 14 days to maintain and formalize coverage."},
+{"study":"Study 9 – General Provisions","text":"Why is it a mistake to remove a vehicle from a policy immediately after it has been destroyed or stolen?","options":["Because this also eliminates the extended benefit provided for the temporary substitute automobile that the insured may be operating at the time","Because this invalidates accident benefits under the policy","Because this means the insured will have to immediately cancel the policy and pay a short rate penalty for early cancellation","Because this invalidates the claim for the described automobile"],"correct":0,"explanation":"The temporary substitute vehicle benefit only exists while the described vehicle is on the policy. Removing it prematurely eliminates rental/substitute coverage before the claim settles."},
+{"study":"Study 9 – General Provisions","text":"What is an example of vicarious liability?","options":["Employer is responsible for the actions of its employee","Restaurant patron is responsible for the actions of the other patrons","Insurer is responsible for the actions of its insureds","Wife is responsible for the actions of her spouse"],"correct":0,"explanation":"Vicarious liability: one party is liable for another's actions due to their relationship. Employer-employee is the classic example — employers are liable for employees' actions in the course of employment."},
+{"study":"Study 9 – General Provisions","text":"Sunita's automobile policy has liability coverage on two automobiles: $300,000 on one vehicle and $400,000 on the other. If she is driving a friend's vehicle and is involved in an accident, what is the most her insurer will pay?","options":["$100,000","$400,000","$700,000","$750,000"],"correct":1,"explanation":"When driving a non-owned vehicle, the coverage available is the HIGHEST limit from any of Sunita's policies — not the sum. The highest is $400,000."},
+{"study":"Study 9 – General Provisions","text":"What is NOT considered a war risk activity under a war risk exclusion?","options":["Bombardment","Invasion","Insurrection","Vandalism"],"correct":3,"explanation":"Bombardment, invasion, and insurrection are all war-related exclusions. Vandalism is property crime covered under Comprehensive — it is not a war risk."},
+{"study":"Study 9 – General Provisions","text":"What is ridesharing?","options":["Arrangement set up by means of a website or mobile app in which a passenger travels in a private vehicle driven by its owner, for free or for a fee","Arrangement where a driver leases a car on a short-term basis from a car rental company","Arrangement set up by means of a website or mobile app that links renters and car owners to arrange peer-to-peer car rental","Arrangement where an insured uses a temporary substitute automobile while the described automobile is in the shop for repair"],"correct":0,"explanation":"Ridesharing: a private vehicle owner transports passengers via a TNC app (Uber, Lyft). Distinct from carsharing (peer-to-peer rental) and traditional car rental."},
+{"study":"Study 9 – General Provisions","text":"If there is an accident while a car is being rented in a carsharing arrangement (peer-to-peer rental), what policy will cover the loss?","options":["Commercial insurance policy attached to the car","Garage policy attached to the car","Owner's policy attached to the car","Non-owned automobile policy of the renter"],"correct":2,"explanation":"In peer-to-peer carsharing, the owner's automobile policy covers the vehicle (with appropriate endorsement). The renter's non-owned auto does NOT automatically extend to peer-to-peer rentals."},
+{"study":"Study 10 – Endorsements","text":"What constitutes a commercial exposure?","options":["Automobiles used on behalf of volunteer organizations, driven by volunteer drivers to transport individuals","Taxi used to transport passengers for compensation","Private car used by one employee to drive other employees from the parking lot to their workplace in a car-pooling arrangement","Volunteer driver delivering hot meals to people in their homes"],"correct":1,"explanation":"Transporting passengers for compensation (taxi) is a commercial exposure. Volunteer transportation and employee carpooling are not commercial exposures under the standard insurance definition."},
+{"study":"Study 10 – Endorsements","text":"Eva has past legal troubles from driving without insurance. As a result, she must file proof of financial responsibility to obtain a driver's licence for commercial purposes, but she does not own a car. Which type of policy can she purchase?","options":["Non-owned automobile policy","Driver's policy","Garage policy","Excess liability policy"],"correct":1,"explanation":"The SPF 6 (Driver's Policy) lets individuals file proof of financial responsibility when they need a licence but don't own a vehicle — covering their liability while driving vehicles they don't own."},
+{"study":"Study 10 – Endorsements","text":"When does an insurer consider using endorsement 13C, restricting glass?","options":["Insured drives frequently on gravel roads","Insured's windshield has unrepaired damage","Insured has had a history of collision claims","Insured has an expensive windshield"],"correct":0,"explanation":"Endorsement 13C restricts glass coverage for insureds who frequently drive on gravel roads — high-frequency windshield claims from road debris justify the exclusion."},
+{"study":"Study 10 – Endorsements","text":"Which statement correctly describes the rating of the driver's automobile policy?","options":["Bodily injury is rated on the lowest exposure.","Property damage is rated on the lowest exposure.","Garage personnel are charged a higher rate than others.","There is no minimum premium for standard limits."],"correct":2,"explanation":"Garage personnel (mechanics, lot attendants) drive multiple vehicles they don't own, creating higher exposure — they are charged a higher rate under the driver's automobile policy."},
+{"study":"Study 10 – Endorsements","text":"Coverage for emergency road service (OPCF 35) endorsement will typically include which coverage?","options":["Mechanical labour at the garage the vehicle is towed to (up to a specified time limit)","Costs to repair the disabled vehicle and make it roadworthy (up to a specified limit)","Delivery of gas, oil, a battery, or a replacement tire (but not the cost of these or similar items)","Maintenance costs for the car, such as oil changes and brake pad replacement (up to a specified limit)"],"correct":2,"explanation":"OPCF 35 covers roadside assistance: towing, labour for delivery of fuel/parts/battery/tire — but NOT the cost of the items themselves, not repairs, and not routine maintenance."},
+{"study":"Study 10 – Endorsements","text":"Which statement correctly describes the school bus coverage?","options":["Gives permission to use the automobile to carry any type of passengers for compensation or hire","Provides specific coverage for passenger hazard but not liability coverage","Sets a liability limit on an aggregate basis rather than on a per-person basis","Provides coverage for the insured's legal liability for loss of or damage to property of passengers in the school bus"],"correct":3,"explanation":"The school bus endorsement specifically adds coverage for the insured's legal liability for damage to or loss of passengers' property (belongings) while on the school bus."},
+{"study":"Study 10 – Endorsements","text":"When applying endorsement 16, suspension of coverage, what coverage is suspended?","options":["Accident benefits coverage","Collision during use or operation of the described automobile","Non-owned automobile coverage","Comprehensive coverage on the described automobile"],"correct":1,"explanation":"OPCF 16 suspends collision coverage while the vehicle is stored/not in use. Comprehensive typically remains active (protecting the stored vehicle from fire, theft, etc.)."},
+{"study":"Study 10 – Endorsements","text":"Which statement correctly describes automobile insurance endorsements?","options":["The insured must sign all endorsements enhancing or adding coverage for them to be valid.","The insured must sign all endorsements reducing or restricting coverage for them to be valid.","The insured must sign all endorsements relating to loss of use and non-owned automobiles for them to be valid.","The insured must sign all endorsements for them to be valid."],"correct":1,"explanation":"Ontario law requires the insured's signature on endorsements that reduce or restrict coverage — ensuring the insured is aware of and consents to the reduced protection."},
+{"study":"Study 10 – Endorsements","text":"What correctly describes the liability for damage to non-owned vehicles (OPCF 27 series) endorsement?","options":["Provides direct damage coverage for physical damage to the rented vehicle","Provides legal liability protection for the driver if the driver is responsible for the damages or assumes responsibility for the damages to a rented vehicle","Is only available in Ontario","Extends direct compensation-property damage coverage from the normal named insured and spouse offered under the basic policy wording to those individuals listed on this endorsement"],"correct":1,"explanation":"OPCF 27 is LIABILITY coverage for damage you cause to a rented/non-owned vehicle — not first-party physical damage coverage. It protects against legal liability to the rental company."},
+{"study":"Study 10 – Endorsements","text":"What is NOT one of the changes that can be made under the alteration (changes) endorsement (OPCF 25A)?","options":["Addition of an automobile","Change of name","Change of ownership","Deletion of an automobile"],"correct":2,"explanation":"OPCF 25A handles administrative changes: adding/deleting vehicles, name changes. A change of OWNERSHIP requires a new application — it's not just an administrative alteration."},
+{"study":"Study 11 – Consumer Protection","text":"The Ontario Insurance Act (Section 238) gives the CEO of the Financial Services Regulatory Authority (FSRA) specific authority to do what?","options":["Establish requirements that must be met before an insurer declines to issue, terminates, or refuses to renew a contract of automobile insurance","Determine the rate to charge for the mandatory third-party liability automobile insurance","Determine the capitalizing requirements necessary for establishing an insurance company in the province of Ontario","Establish the minimum limits of third-party liability insurance that insureds in Ontario must purchase"],"correct":0,"explanation":"Section 238 gives FSRA consumer protection authority over insurer decisions to decline, terminate, or non-renew auto policies — ensuring fair access to coverage."},
+{"study":"Study 11 – Consumer Protection","text":"What does a car year measure?","options":["An insurer's exposure","Year the insured vehicle was made","Condition of the insured vehicle","Mileage on the insured vehicle"],"correct":0,"explanation":"A car year = one vehicle insured for one full year. It's the standard unit of exposure used in actuarial analysis to calculate loss ratios and pricing."},
+{"study":"Study 11 – Consumer Protection","text":"Who solely makes the decision to transfer a risk to the Plan de répartition des risques (PRR)?","options":["Insurer","Insured","Broker","Groupement des assureurs automobiles"],"correct":0,"explanation":"In Quebec's PRR risk sharing plan, the INSURER alone decides to transfer a risk to the pool. The insured and broker have no role in this placement decision."},
+{"study":"Study 11 – Consumer Protection","text":"What organization administers the Quebec risk sharing plan?","options":["Société l'assurance automobile du Québec","Facility Association","Insurance Bureau of Canada","Groupement des assureurs automobiles"],"correct":3,"explanation":"The Groupement des assureurs automobiles (GAA) administers Quebec's PRR. SAAQ handles bodily injury under the public plan — it does not run the residual market."},
+{"study":"Study 11 – Consumer Protection","text":"Which legislative authority deals with federal licensing and supervision of insurance companies?","options":["Minister of transportation","Superintendent of insurance","Office of the Superintendent of Financial Institutions","Lieutenant Governor in Council"],"correct":2,"explanation":"OSFI (Office of the Superintendent of Financial Institutions) federally regulates and supervises insurance companies incorporated under federal law."},
+{"study":"Study 11 – Consumer Protection","text":"Which province has a risk sharing pool that is designed to provide affordable automobile insurance to operators with less than six years of driving experience and clean driving records?","options":["Alberta","British Columbia","New Brunswick","Nova Scotia"],"correct":3,"explanation":"Nova Scotia's risk sharing pool specifically serves newer drivers (under 6 years licensed) with clean records — ensuring they can access affordable coverage in the standard market pool."},
+{"study":"Study 11 – Consumer Protection","text":"What is the name of the Alberta risk sharing pool that allows automobile insurers to transfer private passenger exposures up to a pre-defined maximum?","options":["Grid pool","Non-grid pool","pool","Mobile pool"],"correct":0,"explanation":"Alberta's Grid Pool allows insurers to transfer private passenger exposures that meet grid-rate criteria up to a defined maximum, sharing the risk across the industry."},
+{"study":"Study 11 – Consumer Protection","text":"Who oversees agent and broker licensing pursuant to the provincial and territorial insurance acts?","options":["Superintendent of banks","Provincial or territorial regulatory authority","Premier of the province","Prime minister of Canada"],"correct":1,"explanation":"Insurance agent and broker licensing is regulated provincially/territorially — in Ontario, FSRA regulates agents and RIBO specifically regulates brokers."},
+{"study":"Study 11 – Consumer Protection","text":"How many days' notice must the insurer provide the named insured if it does not intend to renew a contract or intends to renew a contract on varied terms?","options":["7","30","45","60"],"correct":2,"explanation":"Ontario's Insurance Act requires 45 days' written notice before non-renewal or renewal on varied terms for automobile insurance policies."},
+{"study":"Study 11 – Consumer Protection","text":"What do residual markets refer to from an underwriting standpoint?","options":["Markets that ensure insurance availability for all uninsured drivers","Markets that are immediately available to brokers/agents and the public","Special programs to ensure insurance availability for less desirable/more hazardous risks","Special programs to encourage insurance for the more desirable/less hazardous risks"],"correct":2,"explanation":"Residual markets (Facility Association, assigned risk plans) are last-resort programs ensuring even high-risk drivers can obtain coverage that the standard market declines."},
+{"study":"Study 12 – Across Canada","text":"What are the two ways automobile insurance is distributed in Canada?","options":["By direct writers and direct response companies","By private insurance companies and Crown corporations","By direct writers and brokers or agents","By brokers and agents"],"correct":1,"explanation":"Canadian auto insurance is distributed through private insurers (most provinces) AND government Crown corporations (BC, Manitoba, Saskatchewan, partial Quebec)."},
+{"study":"Study 12 – Across Canada","text":"What jurisdiction has a private insurance system with direct compensation?","options":["Yukon","British Columbia","Ontario","Saskatchewan"],"correct":2,"explanation":"Ontario has private insurance with DCPD (direct compensation property damage). BC has ICBC (public). Saskatchewan has SGI (public). Yukon has private/tort."},
+{"study":"Study 12 – Across Canada","text":"Which statement correctly describes automobile insurance in Quebec?","options":["Both bodily injury and property damage claims are covered by the Quebec government compensation plan.","Bodily injury claims are covered by a government compensation plan, and property damage claims are covered by standard automobile policies issued by private insurance companies.","Both bodily injury and property damage coverages could be purchased by the insured from either the Quebec government insurer or a private company.","Both bodily injury and property damage claims are covered by private insurance companies."],"correct":1,"explanation":"Quebec has a split system: SAAQ (government) covers ALL bodily injury on a no-fault basis; property damage is handled by private insurers through standard policies."},
+{"study":"Study 12 – Across Canada","text":"What deductible will apply under direct compensation-property damage (DCPD) coverage if an insured is 50 percent at fault and the policy shows a $500 deductible under DCPD coverage?","options":["$0","$250","$500","$1,000"],"correct":1,"explanation":"DCPD deductible applies proportionally to the degree of fault. At 50% fault: 50% × $500 = $250."},
+{"study":"Study 12 – Across Canada","text":"What is the name of the government automobile insurance plan in Manitoba?","options":["Autoplan","Autopac","Auto Fund","SAAQ"],"correct":1,"explanation":"Manitoba Public Insurance markets basic auto insurance under the Autopac brand. BC uses Autoplan (ICBC); Saskatchewan uses Auto Fund (SGI); Quebec uses SAAQ."},
+{"study":"Study 12 – Across Canada","text":"What jurisdiction has a private insurance system with tort coverage?","options":["Northwest Territories","British Columbia","Ontario","Nova Scotia"],"correct":0,"explanation":"The Northwest Territories has private automobile insurance with a tort (fault-based) system. Ontario has DCPD; BC has public insurance; Nova Scotia has private insurance with restricted tort."},
+{"study":"Study 12 – Across Canada","text":"In which province is accident benefits an optional automobile insurance coverage?","options":["Ontario","Newfoundland and Labrador","Alberta","Nova Scotia"],"correct":1,"explanation":"In Newfoundland and Labrador, accident benefits are optional rather than mandatory. Ontario, Alberta, and Nova Scotia all require accident benefits as part of standard auto insurance."},
+{"study":"Study 12 – Across Canada","text":"In which provinces is basic compulsory automobile insurance provided by the government?","options":["Alberta, New Brunswick, and Newfoundland and Labrador","Saskatchewan, Nova Scotia, and Quebec","British Columbia, Saskatchewan, and Manitoba","Manitoba, Ontario, and Prince Edward Island"],"correct":2,"explanation":"Government-run basic auto insurance exists in BC (ICBC/Autoplan), Saskatchewan (SGI/Auto Fund), and Manitoba (MPI/Autopac)."},
+{"study":"Study 12 – Across Canada","text":"How many sections does the Quebec owner's policy (QPF 1) have?","options":["1","2","3","5"],"correct":2,"explanation":"The QPF 1 has 3 sections: Section 1 (property damage — private insurer), Section 2 (liability — private insurer), and civil liability provisions for the public bodily injury plan."},
+{"study":"Study 12 – Across Canada","text":"What term means a method where a group of people form a network to pool their premiums to insure against a risk?","options":["Ridesharing","Insuretech","Social disruption","P2P insurance"],"correct":3,"explanation":"P2P (peer-to-peer) insurance is a model where participants pool premiums to cover shared risks, often with surplus returned to members at year end."}
+];
+
+const BP = {"Study 1 – Introduction":5,"Study 2 – TPL/DCPD":11,"Study 3 – Accident Benefits":11,"Study 4 – Uninsured Auto":7,"Study 5 – Loss or Damage":11,"Study 6 – Applications":8,"Study 7 – Ratemaking":6,"Study 8 – Statutory Conditions":9,"Study 9 – General Provisions":10,"Study 10 – Endorsements":9,"Study 11 – Consumer Protection":7,"Study 12 – Across Canada":6};
+
+// ── STATE ──
+let examIdx=0, examAnswers=[], examDone=false;
+let pracStudy=null, pracIdx=0, pracFiltered=[], pracAnswered={};
+
+// ── NAVIGATION ──
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('screen-'+id).classList.add('active');
+  const nb=document.getElementById('nav-'+id);
+  if(nb)nb.classList.add('active');
+}
+
+// ── BLUEPRINT CHART ──
+function renderBlueprint(){
+  const c=document.getElementById('blueprint-chart');
+  const entries=Object.entries(BP).sort((a,b)=>b[1]-a[1]);
+  c.innerHTML=entries.map(([s,w])=>{
+    const mustKnow=['Study 2 – TPL/DCPD','Study 3 – Accident Benefits','Study 5 – Loss or Damage','Study 9 – General Provisions'].includes(s);
+    return `<div class="study-row">
+      <div class="study-name"><span class="${mustKnow?'tag must-know':'tag'}">${mustKnow?'★ ':''}${w}%</span> ${s}</div>
+      <div class="prog-bar flex-1"><div class="prog-fill" style="width:${w*6}%;background:${mustKnow?'#f0a500':'#0d2d6b'}"></div></div>
+    </div>`;
+  }).join('');
+}
+
+// ── EXAM ──
+function startExam(){
+  examIdx=0; examAnswers=[]; examDone=false;
+  document.getElementById('nav-results').style.display='none';
+  show('exam');
+  renderExamQ();
+}
+
+function renderExamQ(){
+  const q=PHASE5[examIdx];
+  const total=PHASE5.length;
+  document.getElementById('exam-study-tag').textContent=q.study;
+  document.getElementById('exam-counter').textContent=`Question ${examIdx+1} of ${total}`;
+  document.getElementById('exam-prog').style.width=`${((examIdx)/total)*100}%`;
+  const answered=examAnswers.filter(a=>a!==undefined&&a!==null).length;
+  const correct=examAnswers.filter((a,i)=>a===PHASE5[i].correct).length;
+  document.getElementById('exam-score-live').textContent=`Score: ${correct} / ${answered} answered`;
+  document.getElementById('exam-q-text').textContent=q.text;
+  const opts=document.getElementById('exam-options');
+  opts.innerHTML=q.options.map((o,i)=>`
+    <div class="opt" id="eopt-${i}" onclick="examSelect(${i})">
+      <div class="letter">${'ABCD'[i]}</div><div>${o}</div>
+    </div>`).join('');
+  const fb=document.getElementById('exam-feedback');
+  fb.style.display='none'; fb.className='feedback';
+  document.getElementById('exam-next-btn').style.display='none';
+}
+
+function examSelect(i){
+  if(examAnswers[examIdx]!==undefined)return;
+  examAnswers[examIdx]=i;
+  const q=PHASE5[examIdx];
+  const correct=i===q.correct;
+  document.querySelectorAll('#exam-options .opt').forEach((el,idx)=>{
+    el.classList.add('locked');
+    if(idx===q.correct)el.classList.add(correct&&idx===i?'correct':'reveal-correct');
+    if(idx===i&&!correct)el.classList.add('wrong');
+  });
+  const fb=document.getElementById('exam-feedback');
+  fb.className='feedback '+(correct?'correct':'wrong');
+  fb.innerHTML=`<strong>${correct?'✓ Correct!':'✗ Incorrect.'}</strong> ${q.explanation}`;
+  fb.style.display='block';
+  const nextBtn=document.getElementById('exam-next-btn');
+  nextBtn.style.display='inline-flex';
+  nextBtn.textContent=examIdx<PHASE5.length-1?'Next Question →':'View Results →';
+}
+
+function examNext(){
+  examIdx++;
+  if(examIdx>=PHASE5.length){ showResults(); return; }
+  renderExamQ();
+}
+
+// ── RESULTS ──
+function showResults(){
+  const total=PHASE5.length;
+  const correct=examAnswers.filter((a,i)=>a===PHASE5[i].correct).length;
+  const pct=Math.round((correct/total)*100);
+
+  document.getElementById('res-score').textContent=`${correct} / ${total}`;
+  const grade=pct>=80?'Excellent — well above the 60% pass mark'
+    :pct>=60?'Passing — on track for July 11'
+    :pct>=48?'Close — a few more right answers gets you there'
+    :'Focus needed — review priority studies before July 11';
+  document.getElementById('res-grade').innerHTML=
+    `<span style="color:${pct>=60?'#1e8449':'#c0392b'};font-weight:600">${pct}% — ${grade}</span>`;
+
+  const studyMap={};
+  PHASE5.forEach((q,i)=>{
+    const s=q.study.replace(/^Scenario – /,'');
+    if(!studyMap[s])studyMap[s]={c:0,t:0};
+    studyMap[s].t++;
+    if(examAnswers[i]===q.correct)studyMap[s].c++;
+  });
+
+  document.getElementById('res-by-study').innerHTML=Object.entries(studyMap).map(([s,{c,t}])=>{
+    const p=Math.round((c/t)*100);
+    const color=p>=75?'var(--green)':p>=50?'var(--gold)':'var(--red)';
+    return `<div class="study-row">
+      <div class="study-name" style="font-size:.85rem">${s}</div>
+      <div class="prog-bar flex-1"><div class="prog-fill" style="width:${p}%;background:${color}"></div></div>
+      <div class="pct" style="color:${color}">${c}/${t}</div>
+    </div>`;
+  }).join('');
+
+  const weak=Object.entries(studyMap).filter(([,{c,t}])=>c/t<0.6).map(([s])=>s);
+  document.getElementById('res-advice').innerHTML=weak.length
+    ?`<div class="warn"><strong>Focus areas:</strong> ${weak.join(', ')}. Drill these in the Practice Bank, then retake.</div>`
+    :`<div style="background:#f0faf4;border-left:4px solid var(--green);padding:12px 14px;border-radius:8px;font-size:.875rem">Strong across the board. Review any wrong answers below before the real exam.</div>`;
+
+  document.getElementById('res-review-list').innerHTML=PHASE5.map((q,i)=>{
+    const ua=examAnswers[i];
+    const ok=ua===q.correct;
+    return `<div style="margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #e5e7eb">
+      <div style="font-size:.75rem;color:var(--muted);margin-bottom:4px">Q${i+1} · ${q.study}</div>
+      <div style="font-weight:500;margin-bottom:8px">${q.text}</div>
+      <div style="font-size:.875rem;margin-bottom:6px">
+        ${ok?`<span style="color:var(--green)">✓ Correct: ${q.options[q.correct]}</span>`
+             :`<span style="color:var(--red)">✗ Your answer: ${ua!==undefined?q.options[ua]:'(not answered)'}</span><br>
+               <span style="color:var(--green)">✓ Correct: ${q.options[q.correct]}</span>`}
+      </div>
+      <div style="font-size:.82rem;color:#374151;line-height:1.5;background:#f9fafb;padding:8px 10px;border-radius:6px">${q.explanation}</div>
+    </div>`;
+  }).join('');
+
+  // Save to localStorage
+  const entry={
+    date: new Date().toISOString(),
+    score: correct,
+    total: total,
+    pct: pct,
+    byStudy: JSON.parse(JSON.stringify(studyMap))
+  };
+  try {
+    const hist=JSON.parse(localStorage.getItem('c14_exam_history')||'[]');
+    hist.unshift(entry);
+    if(hist.length>50)hist.length=50;
+    localStorage.setItem('c14_exam_history', JSON.stringify(hist));
+  } catch(e){ /* storage unavailable */ }
+
+  document.getElementById('nav-results').style.display='inline-flex';
+  show('results');
+}
+
+// ── PRACTICE ──
+function initPractice(){
+  const studies=[...new Set(IIC.map(q=>q.study))];
+  const fr=document.getElementById('practice-filters');
+  fr.innerHTML='<button class="filter-btn active" onclick="setPracStudy(null,this)">All Studies</button>'
+    +studies.map(s=>`<button class="filter-btn" onclick="setPracStudy('${s}',this)">${s}</button>`).join('');
+  setPracStudy(null, fr.querySelector('.filter-btn'));
+}
+
+function setPracStudy(study, btn){
+  pracStudy=study; pracIdx=0; pracAnswered={};
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  pracFiltered=study?IIC.filter(q=>q.study===study):IIC;
+  renderPracQ();
+}
+
+function renderPracQ(){
+  if(!pracFiltered.length)return;
+  const q=pracFiltered[pracIdx];
+  const total=pracFiltered.length;
+  document.getElementById('prac-study-tag').textContent=q.study;
+  document.getElementById('prac-counter').textContent=`${pracIdx+1} / ${total}`;
+  document.getElementById('prac-prog').style.width=`${((pracIdx+1)/total)*100}%`;
+  document.getElementById('prac-q-text').textContent=q.text;
+  document.getElementById('prac-prev-btn').style.display=pracIdx>0?'inline-flex':'none';
+
+  const chosen=pracAnswered[pracIdx];
+  const opts=document.getElementById('prac-options');
+  opts.innerHTML=q.options.map((o,i)=>{
+    let cls='opt';
+    if(chosen!==undefined){
+      cls+=' locked';
+      const wasCorrect=(chosen===q.correct);
+      if(i===q.correct) cls+=wasCorrect&&i===chosen?' correct':' reveal-correct';
+      if(i===chosen&&!wasCorrect) cls+=' wrong';
+    }
+    return `<div class="${cls}" id="popt-${i}" onclick="pracSelect(${i})">
+      <div class="letter">${'ABCD'[i]}</div><div>${o}</div></div>`;
+  }).join('');
+
+  const fb=document.getElementById('prac-feedback');
+  if(chosen!==undefined){
+    const correct=(chosen===q.correct);
+    fb.className='feedback '+(correct?'correct':'wrong');
+    fb.innerHTML=`<strong>${correct?'✓ Correct!':'✗ Incorrect.'}</strong> ${q.explanation}`;
+    fb.style.display='block';
+  } else {
+    fb.style.display='none';
+    fb.className='feedback';
+  }
+
+  document.getElementById('prac-next-btn').style.display=
+    (chosen!==undefined&&pracIdx<pracFiltered.length-1)?'inline-flex':'none';
+}
+
+function pracSelect(i){
+  if(pracAnswered[pracIdx]!==undefined)return;
+  pracAnswered[pracIdx]=i;
+  const q=pracFiltered[pracIdx];
+  const correct=(i===q.correct);
+
+  document.querySelectorAll('#prac-options .opt').forEach((el,idx)=>{
+    el.classList.add('locked');
+    if(idx===q.correct) el.classList.add(correct&&idx===i?'correct':'reveal-correct');
+    if(idx===i&&!correct) el.classList.add('wrong');
+  });
+
+  const fb=document.getElementById('prac-feedback');
+  fb.className='feedback '+(correct?'correct':'wrong');
+  fb.innerHTML=`<strong>${correct?'✓ Correct!':'✗ Incorrect.'}</strong> ${q.explanation}`;
+  fb.style.display='block';
+
+  if(pracIdx<pracFiltered.length-1)
+    document.getElementById('prac-next-btn').style.display='inline-flex';
+}
+
+function pracNext(){pracIdx++;renderPracQ();}
+function pracPrev(){if(pracIdx>0){pracIdx--;renderPracQ();}}
+
+// ── HISTORY ──
+function showHistory(){
+  show('history');
+  const hist=JSON.parse(localStorage.getItem('c14_exam_history')||'[]');
+
+  if(!hist.length){
+    document.getElementById('hist-summary-stats').innerHTML=
+      '<p class="muted" style="grid-column:1/-1">No exams taken yet. Take the Mock Exam to start tracking your progress.</p>';
+    document.getElementById('hist-list').innerHTML='';
+    document.getElementById('hist-study-avg').innerHTML='';
+    return;
+  }
+
+  const avg=Math.round(hist.reduce((s,e)=>s+e.pct,0)/hist.length);
+  const best=Math.max(...hist.map(e=>e.pct));
+  const passCount=hist.filter(e=>e.pct>=60).length;
+  document.getElementById('hist-summary-stats').innerHTML=`
+    <div class="stat"><div class="val">${hist.length}</div><div class="lbl">Exams Taken</div></div>
+    <div class="stat"><div class="val">${avg}%</div><div class="lbl">Average Score</div></div>
+    <div class="stat"><div class="val">${best}%</div><div class="lbl">Best Score</div></div>
+    <div class="stat"><div class="val">${passCount}</div><div class="lbl">Passing Attempts</div></div>
+  `;
+
+  document.getElementById('hist-list').innerHTML=hist.map((e)=>{
+    const d=new Date(e.date);
+    const ds=d.toLocaleDateString('en-CA',{month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    const pass=e.pct>=60;
+    return `<div class="hist-entry">
+      <div style="flex:1">
+        <div style="font-weight:600;font-size:.9rem">${ds}</div>
+        <div class="muted" style="font-size:.8rem">${e.score}/${e.total} questions correct</div>
+      </div>
+      <div style="font-size:1.4rem;font-weight:800;color:${pass?'var(--green)':'var(--red)'};margin-right:10px">${e.pct}%</div>
+      <div class="pass-badge" style="background:${pass?'#f0faf4':'#fdf2f2'};color:${pass?'var(--green)':'var(--red)'}">${pass?'PASS':'FAIL'}</div>
+    </div>`;
+  }).join('');
+
+  // Per-study aggregates across all attempts
+  const studyTotals={};
+  hist.forEach(e=>{
+    Object.entries(e.byStudy||{}).forEach(([s,{c,t}])=>{
+      if(!studyTotals[s])studyTotals[s]={c:0,t:0};
+      studyTotals[s].c+=c; studyTotals[s].t+=t;
+    });
+  });
+
+  document.getElementById('hist-study-avg').innerHTML=
+    Object.entries(studyTotals).map(([s,{c,t}])=>{
+      const p=Math.round((c/t)*100);
+      const color=p>=75?'var(--green)':p>=50?'var(--gold)':'var(--red)';
+      return `<div class="study-row">
+        <div class="study-name" style="font-size:.85rem">${s}</div>
+        <div class="prog-bar flex-1"><div class="prog-fill" style="width:${p}%;background:${color}"></div></div>
+        <div class="pct" style="color:${color}">${p}%</div>
+      </div>`;
+    }).join('');
+}
+
+function clearHistory(){
+  localStorage.removeItem('c14_exam_history');
+  showHistory();
+}
+
+// ── INIT ──
+renderBlueprint();
+initPractice();
+</script>
+</body>
+</html>
