@@ -452,9 +452,12 @@ function showResults(){
   document.getElementById('res-grade').innerHTML=
     `<span style="color:${pct>=60?'#1e8449':'#c0392b'};font-weight:600">${pct}% — ${grade}</span>`;
 
+  const studyShortToFull={};
+  Object.keys(BP).forEach(k=>{const m=k.match(/^(Study \d+)/);if(m)studyShortToFull[m[1]]=k;});
   const studyMap={};
   PHASE5.forEach((q,i)=>{
-    const s=q.study.replace(/^Scenario – /,'');
+    const raw=q.study.replace(/^Scenario – /,'');
+    const s=studyShortToFull[raw]||raw;
     if(!studyMap[s])studyMap[s]={c:0,t:0};
     studyMap[s].t++;
     if(examAnswers[i]===q.correct)studyMap[s].c++;
