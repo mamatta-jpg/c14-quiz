@@ -95,6 +95,30 @@
   .hist-entry{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #e5e7eb}
   .hist-entry:last-child{border-bottom:none}
   .pass-badge{padding:3px 10px;border-radius:20px;font-size:.75rem;font-weight:600}
+  .countdown-box{background:linear-gradient(135deg,var(--blue),var(--blue2));color:#fff;border-radius:var(--radius);padding:24px;text-align:center;margin-bottom:4px}
+  .countdown-box .cd-num{font-size:3.2rem;font-weight:800;line-height:1.05}
+  .countdown-box .cd-lbl{font-size:.9rem;opacity:.9;margin-top:2px}
+  .countdown-box .cd-fmt{font-size:.8rem;opacity:.8;margin-top:10px}
+  .today-box{background:#fef9e7;border-left:4px solid var(--gold);padding:16px 18px;border-radius:8px;margin:16px 0}
+  .today-box .tb-head{font-size:.78rem;font-weight:700;color:#92400e;letter-spacing:.5px;text-transform:uppercase}
+  .today-box .tb-body{font-size:1.02rem;font-weight:600;margin-top:4px;color:var(--text)}
+  .today-box .tb-sub{font-size:.85rem;color:#6b5a2a;margin-top:6px;line-height:1.5}
+  .plan-table{width:100%;border-collapse:collapse;font-size:.85rem;margin-top:8px}
+  .plan-table th{text-align:left;padding:8px 10px;background:var(--bg);color:var(--blue2);font-size:.75rem;text-transform:uppercase;letter-spacing:.4px}
+  .plan-table td{padding:8px 10px;border-bottom:1px solid #eef0f5;vertical-align:top;line-height:1.45}
+  .plan-table tr.is-today td{background:#fef9e7;font-weight:600}
+  .plan-table .day-cell{white-space:nowrap;color:var(--muted);font-size:.8rem}
+  .phase-head{margin:22px 0 6px;font-size:.95rem;color:var(--blue);font-weight:700}
+  .phase-head .ph-sub{font-weight:400;color:var(--muted);font-size:.82rem}
+  .tips-list{list-style:none;padding:0;margin:8px 0 0}
+  .tips-list li{padding:10px 0;border-bottom:1px solid #eef0f5;line-height:1.55;font-size:.92rem}
+  .tips-list li:last-child{border-bottom:none}
+  .tips-list li strong{color:var(--blue2)}
+  .audio-link{display:inline-flex;align-items:center;gap:8px;background:var(--teal);color:#fff;padding:10px 18px;border-radius:8px;font-weight:600;text-decoration:none;font-size:.9rem}
+  .audio-link:hover{opacity:.9}
+  .jump-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .jump-list span{background:var(--bg);border:1px solid #e5e7eb;border-radius:6px;padding:4px 10px;font-size:.8rem}
+  .jump-list span b{color:var(--blue)}
 </style>
 </head>
 <body>
@@ -106,6 +130,7 @@
   </div>
   <div class="modes">
     <button id="nav-home" class="active" onclick="show('home')">Home</button>
+    <button id="nav-plan" onclick="showPlan()">📅 Plan</button>
     <button id="nav-exam" onclick="startExam()">Mock Exam</button>
     <button id="nav-practice" onclick="show('practice')">Practice Bank</button>
     <button id="nav-history" onclick="showHistory()">History</button>
@@ -147,6 +172,63 @@
     <div class="divider"></div>
     <h2>Exam Blueprint</h2>
     <div id="blueprint-chart"></div>
+  </div>
+</div>
+
+<!-- PLAN -->
+<div id="screen-plan" class="screen">
+  <div class="card">
+    <h1>📅 21-Day Study Plan</h1>
+    <p class="muted">Tailored to your weak areas. Closed-book exam — the loop is: listen → skim → drill → make Anki cards for misses.</p>
+    <div class="countdown-box" style="margin-top:18px">
+      <div class="cd-num" id="plan-cd-num">—</div>
+      <div class="cd-lbl" id="plan-cd-lbl">until the C14 exam</div>
+      <div class="cd-fmt">Exam: <strong>July 11, 2026</strong> · 100 MCQ · 2 hours · closed-book · 60% to pass</div>
+    </div>
+    <div class="today-box" id="plan-today">
+      <div class="tb-head">Today's Focus</div>
+      <div class="tb-body" id="plan-today-body">—</div>
+      <div class="tb-sub" id="plan-today-sub"></div>
+    </div>
+    <div class="warn">⭐ <strong>Core 43%</strong> = Studies 2, 3, 5, 9. Master these four and 60% is within reach. <strong>+3 on each weak study</strong> is the whole game.</div>
+  </div>
+
+  <div class="card">
+    <h2>The Schedule</h2>
+    <div id="plan-schedule"></div>
+  </div>
+
+  <div class="card">
+    <h2>Priority Map (where the marks are)</h2>
+    <div id="plan-priority"></div>
+  </div>
+
+  <div class="card">
+    <h2>🪤 Traps &amp; High-Yield Tips</h2>
+    <ul class="tips-list">
+      <li><strong>Time budget:</strong> ~72 sec/question (100 Q / 120 min). Flag-and-return on hard ones; leave 15–20 min to review flagged questions at the end.</li>
+      <li><strong>DCPD deductible</strong> applies only when the insured is <em>at fault</em>. 0% fault → $0 deductible (insurer pays full repair, then subrogates).</li>
+      <li><strong>Ontario mandatory minimum TPL = $200,000.</strong> ($100K is the old pre-1996 distractor.)</li>
+      <li><strong>SABS medical/rehab</strong> is the baseline benefit — paid even if neither IRB nor non-earner benefit applies.</li>
+      <li><strong>Uninsured Auto priority:</strong> 95% to bodily injury / 5% to property damage.</li>
+      <li><strong>Misrepresentation does NOT require intent</strong> — incorrect or missing material info "with or without intent to mislead" qualifies.</li>
+      <li><strong>Statutory Conditions:</strong> proof of loss = <strong>90 days</strong>. Newly acquired auto auto-coverage = <strong>14 days</strong> to notify.</li>
+      <li><strong>Study 12:</strong> know government-vs-private and no-fault-vs-tort <em>by province</em> (e.g. SK = SGI Crown; QC public for bodily injury only).</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>🎧 Audio</h2>
+    <p class="muted" style="margin-bottom:14px">Listen on the commute. The same loop every day — audio first, then drill.</p>
+    <a class="audio-link" href="https://drive.google.com/file/d/19TIVFh-dLdlRPjYXTFaGRsgu3K39q0kB/view" target="_blank" rel="noopener">🎧 Study Summaries (2h6m, all studies)</a>
+    <p class="muted" style="margin-top:14px;font-size:.82rem">Confirmed jump times (others pending):</p>
+    <div class="jump-list">
+      <span><b>S1</b> Intro — 1:18</span>
+      <span><b>S2</b> TPL/DCPD — 12:07</span>
+      <span><b>S3</b> Accident Benefits — 30:18</span>
+      <span><b>S7</b> Ratemaking — 64:16</span>
+      <span><b>S12</b> Across Canada — 119:42</span>
+    </div>
   </div>
 </div>
 
@@ -285,7 +367,7 @@ const IIC = [
 {"study":"Study 5 – Loss or Damage","text":"How many days do insureds (who are not incapacitated) have to notify the insurer in writing of a loss involving the car?","options":["1","2","7","14"],"correct":1,"explanation":"Under OAP 1 Statutory Conditions, the insured must give prompt written notice — typically within 2 days of discovering the loss (absent incapacitation)."},
 {"study":"Study 5 – Loss or Damage","text":"Which statement correctly describes the outcome if the insured operates the vehicle under the influence of intoxicating liquor or drugs?","options":["The policy will not cover loss or damage to the vehicle.","The policy will only cover the damage to the vehicle if vehicle is owned by a family member.","The policy will only cover the vehicle if this is the driver's first offence.","The policy will only cover the percentage of the damage for which the driver is at fault."],"correct":0,"explanation":"Operating while impaired is a prohibited use under Statutory Condition 5 — loss or damage coverage on the insured's own vehicle is voided. TPL (absolute liability) may still respond for third-party claims."},
 {"study":"Study 5 – Loss or Damage","text":"What is an example of salvage charges that would be covered as an additional benefit under loss or damage coverage?","options":["Expenses involved in recovering property to prevent loss from an insured peril","Expenses that arise when the automobile is being transported by water and cargo must be jettisoned","Expenses that arise from fire department charges for attending the scene of a loss","Expenses for customs duties levied when the automobile suffers a loss in the United States"],"correct":0,"explanation":"Sue and labour (salvage) charges cover expenses incurred to protect property from further damage from an insured peril — paid as an additional benefit on top of the claim itself."},
-{"study":"Study 6 – Applications","text":"What does an underwriter consider as a misrepresentation on an automobile application?","options":["Underestimating the size of the engine and mileage on one's car","Intentionally not reporting details of a claim","Forgetting to disclose a ticket recently received","Guessing the year and make of the car"],"correct":1,"explanation":"Misrepresentation requires INTENT — deliberately omitting claim details is intentional non-disclosure. Forgetting or estimating (A, C, D) are honest mistakes, not misrepresentation."},
+{"study":"Study 6 – Applications","text":"What does an underwriter consider as a misrepresentation on an automobile application?","options":["Underestimating the size of the engine and mileage on one's car","Intentionally not reporting details of a claim","Forgetting to disclose a ticket recently received","Guessing the year and make of the car"],"correct":1,"explanation":"Answer: B — deliberately not reporting a claim is the clearest, most unambiguous case. IMPORTANT: misrepresentation does NOT actually require intent. The C14 textbook (p.115) defines it as incorrect or missing material information \u2018with or without the intent to mislead\u2019, so C (forgetting a ticket = missing material fact) can technically qualify too. Pick B because it is the clearest example, not because the others are merely honest mistakes."},
 {"study":"Study 6 – Applications","text":"What is the difference between an electric vehicle and a hybrid vehicle?","options":["No difference","Electric vehicle uses a combination of internal combustion engine and electric motor features","Hybrid vehicle uses a combination of internal combustion engine and electric motor features","Electric vehicle has a range of 50 km per battery charge, but the hybrid vehicle has a range of 200 km per battery charge"],"correct":2,"explanation":"A hybrid combines an internal combustion engine (ICE) with an electric motor. A pure electric vehicle runs on electricity alone — no combustion engine."},
 {"study":"Study 6 – Applications","text":"Which section of the application contains a warning of a penalty when the applicant gives false particulars of a described automobile to be insured, and these particulars are to the prejudice of the insurer?","options":["Driver information","Rating information","Insurance coverages applied for","Declaration of applicant"],"correct":3,"explanation":"The Declaration section contains the applicant's signature and the statutory warning that providing false particulars to the prejudice of the insurer is an offence."},
 {"study":"Study 6 – Applications","text":"What is a function of underwriting?","options":["Establishing the terms of the application","Determining the purchase price of the automobile","Using actuarial methodology to determine rates for insuring an automobile","Determining the amount to be paid for a claim"],"correct":0,"explanation":"Underwriting establishes the terms under which a risk will be accepted — setting conditions, exclusions, and premiums. Rate development (C) is actuarial/ratemaking, not underwriting."},
@@ -362,6 +444,37 @@ const BP = {"Study 1 – Introduction":5,"Study 2 – TPL/DCPD":11,"Study 3 – 
 // ── STATE ──
 let examIdx=0, examAnswers=[], examDone=false;
 let pracStudy=null, pracIdx=0, pracFiltered=[], pracAnswered={};
+
+// ── PRACTICE MISTAKE TRACKING (per-question, persisted) ──
+// Stored as a localStorage array of question `text` strings (no stable id field exists).
+const PRAC_MISTAKES_KEY='c14_prac_mistakes';
+function loadMistakes(){
+  try{ return new Set(JSON.parse(localStorage.getItem(PRAC_MISTAKES_KEY)||'[]')); }
+  catch(e){ return new Set(); }
+}
+function saveMistakes(set){
+  localStorage.setItem(PRAC_MISTAKES_KEY, JSON.stringify([...set]));
+}
+function recordMistake(qText, wasWrong){
+  const set=loadMistakes();
+  if(wasWrong) set.add(qText); else set.delete(qText);
+  saveMistakes(set);
+}
+// Count only mistakes that still match a current IIC question.
+function mistakeCount(){
+  const set=loadMistakes();
+  return IIC.filter(q=>set.has(q.text)).length;
+}
+// Update just the ★ My Mistakes button label in place (no full rebuild).
+function refreshMistakeCount(){
+  const fr=document.getElementById('practice-filters');
+  if(!fr) return;
+  const btns=fr.querySelectorAll('.filter-btn');
+  const last=btns[btns.length-1];
+  if(last && last.textContent.indexOf('My Mistakes')!==-1){
+    last.textContent=`★ My Mistakes (${mistakeCount()})`;
+  }
+}
 
 // ── NAVIGATION ──
 function show(id){
@@ -514,23 +627,55 @@ function showResults(){
 
 // ── PRACTICE ──
 function initPractice(){
+  renderPracFilters();
+  const fr=document.getElementById('practice-filters');
+  setPracStudy(null, fr.querySelector('.filter-btn'));
+}
+
+// Build (or rebuild) the filter buttons. Preserves which filter is active.
+function renderPracFilters(){
   const studies=[...new Set(IIC.map(q=>q.study))];
   const fr=document.getElementById('practice-filters');
-  fr.innerHTML='<button class="filter-btn active" onclick="setPracStudy(null,this)">All Studies</button>'
-    +studies.map(s=>`<button class="filter-btn" onclick="setPracStudy('${s}',this)">${s}</button>`).join('');
-  setPracStudy(null, fr.querySelector('.filter-btn'));
+  const allActive = pracStudy===null ? ' active' : '';
+  const mistakesActive = pracStudy==='__mistakes__' ? ' active' : '';
+  fr.innerHTML=`<button class="filter-btn${allActive}" onclick="setPracStudy(null,this)">All Studies</button>`
+    +studies.map(s=>{
+        const act = pracStudy===s ? ' active' : '';
+        return `<button class="filter-btn${act}" onclick="setPracStudy('${s}',this)">${s}</button>`;
+      }).join('')
+    +`<button class="filter-btn${mistakesActive}" onclick="setPracStudy('__mistakes__',this)">★ My Mistakes (${mistakeCount()})</button>`;
 }
 
 function setPracStudy(study, btn){
   pracStudy=study; pracIdx=0; pracAnswered={};
   document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  pracFiltered=study?IIC.filter(q=>q.study===study):IIC;
+  if(btn) btn.classList.add('active');
+  if(study==='__mistakes__'){
+    const set=loadMistakes();
+    pracFiltered=IIC.filter(q=>set.has(q.text));
+  } else {
+    pracFiltered=study?IIC.filter(q=>q.study===study):IIC;
+  }
   renderPracQ();
 }
 
 function renderPracQ(){
-  if(!pracFiltered.length)return;
+  if(!pracFiltered.length){
+    // Empty filter (e.g. ★ My Mistakes with zero mistakes) — show a graceful message.
+    const emptyMsg = pracStudy==='__mistakes__'
+      ? 'No mistakes yet — go get some wrong first! 💪'
+      : 'No questions in this filter.';
+    document.getElementById('prac-study-tag').textContent = pracStudy==='__mistakes__' ? '★ My Mistakes' : '';
+    document.getElementById('prac-counter').textContent='0 / 0';
+    document.getElementById('prac-prog').style.width='0%';
+    document.getElementById('prac-q-text').textContent=emptyMsg;
+    document.getElementById('prac-options').innerHTML='';
+    const fb=document.getElementById('prac-feedback');
+    fb.style.display='none'; fb.className='feedback';
+    document.getElementById('prac-prev-btn').style.display='none';
+    document.getElementById('prac-next-btn').style.display='none';
+    return;
+  }
   const q=pracFiltered[pracIdx];
   const total=pracFiltered.length;
   document.getElementById('prac-study-tag').textContent=q.study;
@@ -573,6 +718,10 @@ function pracSelect(i){
   pracAnswered[pracIdx]=i;
   const q=pracFiltered[pracIdx];
   const correct=(i===q.correct);
+
+  // Persist per-question mistake state, then refresh the ★ My Mistakes count.
+  recordMistake(q.text, !correct);
+  refreshMistakeCount();
 
   document.querySelectorAll('#prac-options .opt').forEach((el,idx)=>{
     el.classList.add('locked');
@@ -653,6 +802,117 @@ function showHistory(){
 function clearHistory(){
   localStorage.removeItem('c14_exam_history');
   showHistory();
+}
+
+// ── STUDY PLAN ──
+const EXAM_DATE = new Date(2026,6,11); // July 11, 2026 (month is 0-indexed)
+const PLAN_START = new Date(2026,5,20); // June 20, 2026
+
+const PLAN_DAYS = [
+  // Phase 1 — Learn (Days 1-12): listen → skim Study Guide → do that study's 10 MCQs → make Anki cards for misses
+  {day:1, date:new Date(2026,5,20), label:"Jun 20", focus:"Study 2 — TPL / DCPD", weight:"11%", phase:1},
+  {day:2, date:new Date(2026,5,21), label:"Jun 21", focus:"Study 3 — Accident Benefits", weight:"11%", phase:1},
+  {day:3, date:new Date(2026,5,22), label:"Jun 22", focus:"Study 5 — Loss or Damage", weight:"11%", phase:1},
+  {day:4, date:new Date(2026,5,23), label:"Jun 23", focus:"Study 9 — General Provisions", weight:"10%", phase:1},
+  {day:5, date:new Date(2026,5,24), label:"Jun 24", focus:"Study 8 — Statutory Conditions", weight:"9%", phase:1},
+  {day:6, date:new Date(2026,5,25), label:"Jun 25", focus:"Study 10 — Endorsements", weight:"9%", phase:1},
+  {day:7, date:new Date(2026,5,26), label:"Jun 26", focus:"Study 6 — Applications", weight:"8%", phase:1},
+  {day:8, date:new Date(2026,5,27), label:"Jun 27", focus:"Study 12 — Across Canada", weight:"8%", phase:1},
+  {day:9, date:new Date(2026,5,28), label:"Jun 28", focus:"Study 11 — Consumer Protection", weight:"7%", phase:1},
+  {day:10, date:new Date(2026,5,29), label:"Jun 29", focus:"Study 7 — Ratemaking", weight:"6%", phase:1},
+  {day:11, date:new Date(2026,5,30), label:"Jun 30", focus:"Study 1 — Introduction", weight:"5%", phase:1},
+  {day:12, date:new Date(2026,6,1), label:"Jul 1", focus:"Study 4 — Uninsured Auto", weight:"5%", phase:1},
+  // Phase 2 — Drill (Days 13-17)
+  {day:13, date:new Date(2026,6,2), label:"Jul 2", focus:"Drill: 25-Q Mock + My Mistakes", weight:"—", phase:2},
+  {day:14, date:new Date(2026,6,3), label:"Jul 3", focus:"Drill: 25-Q Mock + My Mistakes", weight:"—", phase:2},
+  {day:15, date:new Date(2026,6,4), label:"Jul 4", focus:"Drill: 25-Q Mock + My Mistakes", weight:"—", phase:2},
+  {day:16, date:new Date(2026,6,5), label:"Jul 5", focus:"Drill: 25-Q Mock + My Mistakes", weight:"—", phase:2},
+  {day:17, date:new Date(2026,6,6), label:"Jul 6", focus:"Drill: 25-Q Mock + My Mistakes", weight:"—", phase:2},
+  // Phase 3 — Simulate (Days 18-20)
+  {day:18, date:new Date(2026,6,7), label:"Jul 7", focus:"Simulate: full timed mock (≥70% target)", weight:"—", phase:3},
+  {day:19, date:new Date(2026,6,8), label:"Jul 8", focus:"Simulate: full timed mock (≥70% target)", weight:"—", phase:3},
+  {day:20, date:new Date(2026,6,9), label:"Jul 9", focus:"Simulate: full timed mock (≥70% target)", weight:"—", phase:3},
+  // Day 21
+  {day:21, date:new Date(2026,6,10), label:"Jul 10", focus:"Light review of Tips. Rest.", weight:"—", phase:4},
+];
+
+const PHASE_INFO = {
+  1:{name:"Phase 1 — Learn", days:"Days 1–12 · Jun 20 – Jul 1", sub:"One study/day. Daily loop: listen to the summary segment → skim the Study Guide section → do that study's 10 MCQs in Practice Bank → make Anki cards for misses."},
+  2:{name:"Phase 2 — Drill", days:"Days 13–17 · Jul 2 – Jul 6", sub:"One 25-Q Mock daily; use Practice Bank \"My Mistakes\" filter; re-listen to core-study audio; any study under 70% → re-read + redo its 10 MCQs."},
+  3:{name:"Phase 3 — Simulate", days:"Days 18–20 · Jul 7 – Jul 9", sub:"Full timed mocks. Target ≥70% on every study."},
+  4:{name:"Day 21 — Taper", days:"Jul 10", sub:"Light review of the Tips list, then rest. Jul 11: EXAM."},
+};
+
+function midnight(d){ return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+
+function renderPlan(){
+  const now = midnight(new Date());
+  // Countdown
+  const dayMs = 86400000;
+  const diff = Math.round((midnight(EXAM_DATE) - now) / dayMs);
+  const numEl = document.getElementById('plan-cd-num');
+  const lblEl = document.getElementById('plan-cd-lbl');
+  if(diff > 1){ numEl.textContent = diff; lblEl.textContent = "days until the C14 exam"; }
+  else if(diff === 1){ numEl.textContent = "1"; lblEl.textContent = "day until the C14 exam — EXAM TOMORROW"; }
+  else if(diff === 0){ numEl.textContent = "🎯"; lblEl.textContent = "EXAM DAY — July 11. You've got this."; }
+  else { numEl.textContent = "✓"; lblEl.textContent = "Exam date has passed."; }
+
+  // Today's focus
+  const tBody = document.getElementById('plan-today-body');
+  const tSub = document.getElementById('plan-today-sub');
+  const todayEntry = PLAN_DAYS.find(d => midnight(d.date).getTime() === now.getTime());
+  if(now < midnight(PLAN_START)){
+    tBody.textContent = "Plan starts Jun 20.";
+    tSub.textContent = "First up: Study 2 — TPL/DCPD (the biggest core study at 11%).";
+  } else if(now > midnight(EXAM_DATE)){
+    tBody.textContent = "Exam passed.";
+    tSub.textContent = "Nice work finishing the plan.";
+  } else if(now.getTime() === midnight(EXAM_DATE).getTime()){
+    tBody.textContent = "🎯 EXAM DAY — go pass it.";
+    tSub.textContent = "Stay calm, budget ~72 sec/question, flag-and-return, review at the end.";
+  } else if(todayEntry){
+    tBody.textContent = `Day ${todayEntry.day} — ${todayEntry.focus}${todayEntry.weight!=="—" ? " ("+todayEntry.weight+")" : ""}`;
+    tSub.textContent = PHASE_INFO[todayEntry.phase].sub;
+  } else {
+    tBody.textContent = "Catch-up day — review yesterday's misses.";
+    tSub.textContent = "Re-run Practice Bank on your weakest study and clear your Anki due cards.";
+  }
+
+  // Schedule (grouped by phase)
+  const sched = document.getElementById('plan-schedule');
+  let html = "";
+  [1,2,3,4].forEach(ph => {
+    const rows = PLAN_DAYS.filter(d => d.phase === ph);
+    const info = PHASE_INFO[ph];
+    html += `<div class="phase-head">${info.name} <span class="ph-sub">— ${info.days}</span></div>`;
+    html += `<p class="muted" style="font-size:.82rem;margin-bottom:6px">${info.sub}</p>`;
+    html += `<table class="plan-table"><thead><tr><th style="width:54px">Day</th><th style="width:64px">Date</th><th>Focus</th></tr></thead><tbody>`;
+    rows.forEach(d => {
+      const isToday = midnight(d.date).getTime() === now.getTime();
+      html += `<tr class="${isToday?'is-today':''}"><td>${d.day}${isToday?' 👈':''}</td><td class="day-cell">${d.label}</td><td>${d.focus}${d.weight!=="—" ? ` <span class="muted">(${d.weight})</span>` : ""}</td></tr>`;
+    });
+    html += `</tbody></table>`;
+  });
+  sched.innerHTML = html;
+
+  // Priority map — reuse BP weights
+  const pri = document.getElementById('plan-priority');
+  const core = ['Study 2 – TPL/DCPD','Study 3 – Accident Benefits','Study 5 – Loss or Damage','Study 9 – General Provisions'];
+  const entries = Object.entries(BP).sort((a,b)=>b[1]-a[1]);
+  let pHtml = `<p class="muted" style="font-size:.85rem;margin-bottom:8px">★ Core 43% (master these) · then highest-weight studies down.</p>`;
+  pHtml += entries.map(([s,w])=>{
+    const isCore = core.includes(s);
+    return `<div class="study-row">
+      <div class="study-name"><span class="${isCore?'tag must-know':'tag'}">${isCore?'★ ':''}${w}%</span> ${s}</div>
+      <div class="prog-bar flex-1"><div class="prog-fill" style="width:${w*6}%;background:${isCore?'#f0a500':'#0d2d6b'}"></div></div>
+    </div>`;
+  }).join('');
+  pri.innerHTML = pHtml;
+}
+
+function showPlan(){
+  renderPlan();
+  show('plan');
 }
 
 // ── INIT ──
