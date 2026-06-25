@@ -4,6 +4,26 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>C14 Ontario Auto — Quiz App</title>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script>
+  const _fbApp = firebase.initializeApp({
+    apiKey: "AIzaSyBIlryMuD1oKvwMtUK9WKnpRcrg14c-Tyw",
+    authDomain: "plasma-yeti-466509-q6.firebaseapp.com",
+    projectId: "plasma-yeti-466509-q6",
+    storageBucket: "plasma-yeti-466509-q6.firebasestorage.app",
+    messagingSenderId: "255675608941",
+    appId: "1:255675608941:web:4556e31afaaf704c007464"
+  });
+  const _db = firebase.firestore();
+  function saveExamToFirestore(entry) {
+    _db.collection('examResults').add({
+      ...entry,
+      userId: 'joseph',
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    }).catch(e => console.warn('Firestore:', e));
+  }
+</script>
 <style>
   :root{
     --blue:#0d2d6b;--blue2:#1a4294;--teal:#0e8a7a;--gold:#f0a500;
@@ -625,6 +645,7 @@ function showResults(){
     if(hist.length>50)hist.length=50;
     localStorage.setItem('c14_exam_history', JSON.stringify(hist));
   } catch(e){ /* storage unavailable */ }
+  saveExamToFirestore(entry);
 
   document.getElementById('nav-results').style.display='inline-flex';
   show('results');
